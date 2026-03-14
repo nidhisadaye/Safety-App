@@ -1,0 +1,1953 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>SAKHI</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html{height:100%;}
+body{
+  height:100%;
+  background:#0a0a12;
+  color:#f0f0f8;
+  font-family:'Plus Jakarta Sans',sans-serif;
+  overflow:hidden;
+  position:relative;
+}
+
+/* ─── BACKGROUND GLOWS ─── */
+body::before{
+  content:'';
+  position:fixed;top:0;left:0;right:0;bottom:0;
+  background:
+    radial-gradient(ellipse 70% 50% at 20% 10%, rgba(255,45,85,0.12) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 40% at 85% 60%, rgba(77,166,255,0.08) 0%, transparent 60%),
+    radial-gradient(ellipse 40% 35% at 50% 90%, rgba(191,90,242,0.07) 0%, transparent 60%);
+  pointer-events:none;
+  z-index:0;
+}
+
+/* ─── SCREENS ─── */
+.screen{
+  display:none;
+  flex-direction:column;
+  position:absolute;
+  top:0;left:0;right:0;bottom:0;
+  overflow-y:auto;
+  overflow-x:hidden;
+  z-index:1;
+  -webkit-overflow-scrolling:touch;
+}
+.screen.active{display:flex;}
+
+/* ─── SPLASH ─── */
+#splashPage{
+  background:#07070d;
+  align-items:center;justify-content:center;
+  overflow:hidden;
+}
+.splash-bg{
+  position:absolute;top:0;left:0;right:0;bottom:0;
+  background:
+    radial-gradient(ellipse 100% 70% at 50% -10%, rgba(255,45,85,0.35) 0%, transparent 55%),
+    radial-gradient(ellipse 60% 50% at 10% 80%, rgba(191,90,242,0.15) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 40% at 90% 70%, rgba(77,166,255,0.12) 0%, transparent 60%),
+    #07070d;
+  animation:splashBgPulse 4s ease-in-out infinite alternate;
+}
+@keyframes splashBgPulse{
+  from{filter:brightness(1);}
+  to{filter:brightness(1.15);}
+}
+.splash-particles{position:absolute;top:0;left:0;right:0;bottom:0;pointer-events:none;}
+.sp{
+  position:absolute;border-radius:50%;
+  background:rgba(255,45,85,0.4);
+  animation:spFloat linear infinite;
+}
+@keyframes spFloat{
+  0%{transform:translateY(100vh) scale(0);opacity:0;}
+  10%{opacity:1;}
+  90%{opacity:0.6;}
+  100%{transform:translateY(-20vh) scale(1);opacity:0;}
+}
+.splash-center{position:relative;z-index:2;text-align:center;padding:0 32px;}
+.splash-logo{
+  width:90px;height:90px;border-radius:26px;
+  background:linear-gradient(135deg,#ff2d55,#c40040);
+  display:flex;align-items:center;justify-content:center;
+  font-size:42px;margin:0 auto 28px;
+  box-shadow:0 20px 50px rgba(255,45,85,0.5),0 0 0 1px rgba(255,255,255,0.1);
+  animation:logoBounce 0.6s cubic-bezier(0.34,1.56,0.64,1) both;
+}
+@keyframes logoBounce{from{transform:scale(0) rotate(-20deg);opacity:0;}to{transform:scale(1) rotate(0);opacity:1;}}
+.splash-title{
+  font-size:52px;font-weight:900;letter-spacing:-2px;
+  background:linear-gradient(135deg,#fff 30%,rgba(255,45,85,0.8));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  animation:fadeUp 0.5s 0.3s both;
+}
+.splash-tagline{
+  font-size:14px;color:rgba(240,240,248,0.5);
+  font-weight:500;letter-spacing:0.5px;
+  margin-top:10px;
+  animation:fadeUp 0.5s 0.5s both;
+}
+.splash-btn{
+  margin-top:52px;
+  animation:fadeUp 0.5s 0.7s both;
+}
+.splash-btn button{
+  width:100%;padding:16px;
+  background:linear-gradient(135deg,#ff2d55,#cc0040);
+  color:white;font-family:'Plus Jakarta Sans',sans-serif;
+  font-size:15px;font-weight:700;
+  border:none;border-radius:14px;cursor:pointer;
+  box-shadow:0 8px 28px rgba(255,45,85,0.45);
+  transition:transform 0.15s,box-shadow 0.2s;
+  letter-spacing:0.3px;
+}
+.splash-btn button:active{transform:scale(0.97);}
+.splash-login-link{
+  margin-top:16px;
+  font-size:13px;color:rgba(240,240,248,0.4);
+  animation:fadeUp 0.5s 0.85s both;
+  text-align:center;
+}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:none;}}
+
+/* ─── REGISTER (multi-step) ─── */
+#registerPage{
+  background:
+    radial-gradient(ellipse 80% 55% at 50% 0%, rgba(255,45,85,0.18) 0%, transparent 55%),
+    #0a0a12;
+  overflow-y:auto;
+}
+.reg-hero{
+  padding:52px 24px 28px;
+  text-align:center;
+  position:relative;
+}
+.reg-logo{
+  width:56px;height:56px;border-radius:17px;
+  background:linear-gradient(135deg,#ff2d55,#c40040);
+  display:flex;align-items:center;justify-content:center;
+  font-size:26px;margin:0 auto 16px;
+  box-shadow:0 10px 28px rgba(255,45,85,0.4);
+}
+.reg-steps{
+  display:flex;align-items:center;justify-content:center;gap:6px;
+  margin-bottom:28px;
+}
+.reg-step-dot{
+  width:8px;height:8px;border-radius:50%;
+  background:rgba(255,255,255,0.15);
+  transition:all 0.3s;
+}
+.reg-step-dot.done{background:#ff2d55;box-shadow:0 0 8px rgba(255,45,85,0.6);}
+.reg-step-dot.active{background:#ff2d55;width:22px;border-radius:4px;box-shadow:0 0 8px rgba(255,45,85,0.5);}
+.reg-panel{display:none;padding:0 24px 32px;animation:panelIn 0.3s ease both;}
+.reg-panel.active{display:block;}
+@keyframes panelIn{from{opacity:0;transform:translateX(18px);}to{opacity:1;transform:none;}}
+.reg-field-wrap{position:relative;margin-bottom:12px;}
+.reg-field-icon{
+  position:absolute;left:14px;top:50%;transform:translateY(-50%);
+  font-size:16px;pointer-events:none;
+}
+.reg-field{
+  background:#14141e;
+  border:1.5px solid rgba(255,255,255,0.08);
+  border-radius:13px;
+  padding:13px 16px 13px 42px;
+  width:100%;color:#f0f0f8;
+  font-family:'Plus Jakarta Sans',sans-serif;
+  font-size:14px;font-weight:500;outline:none;
+  transition:border-color 0.2s,box-shadow 0.2s;
+  display:block;
+}
+.reg-field::placeholder{color:rgba(240,240,248,0.25);}
+.reg-field:focus{
+  border-color:#ff2d55;
+  box-shadow:0 0 0 3px rgba(255,45,85,0.18),0 0 20px rgba(255,45,85,0.08);
+}
+.reg-label{font-size:11px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:rgba(240,240,248,0.35);margin-bottom:8px;margin-top:18px;}
+.reg-next{
+  width:100%;padding:15px;
+  background:linear-gradient(135deg,#ff2d55,#cc0040);
+  color:white;font-family:'Plus Jakarta Sans',sans-serif;
+  font-size:14px;font-weight:700;
+  border:none;border-radius:13px;cursor:pointer;
+  box-shadow:0 6px 22px rgba(255,45,85,0.35);
+  transition:transform 0.15s,box-shadow 0.2s;
+  margin-top:6px;
+}
+.reg-next:active{transform:scale(0.97);}
+.reg-skip{
+  width:100%;padding:12px;
+  background:transparent;color:rgba(240,240,248,0.35);
+  font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;font-weight:600;
+  border:none;cursor:pointer;margin-top:6px;
+}
+.reg-success{
+  text-align:center;padding:40px 0 20px;
+}
+.reg-tick{
+  width:72px;height:72px;border-radius:50%;
+  background:linear-gradient(135deg,#30d158,#1a9e3e);
+  display:flex;align-items:center;justify-content:center;
+  font-size:32px;margin:0 auto 18px;
+  box-shadow:0 12px 30px rgba(48,209,88,0.35);
+  animation:logoBounce 0.5s cubic-bezier(0.34,1.56,0.64,1) both;
+}
+
+/* ─── LOGIN PAGE ─── */
+#loginPage{
+  background:
+    radial-gradient(ellipse 80% 55% at 50% 0%, rgba(255,45,85,0.18) 0%, transparent 55%),
+    radial-gradient(ellipse 50% 40% at 90% 80%, rgba(77,166,255,0.08) 0%, transparent 60%),
+    #0a0a12;
+  align-items:center;
+  justify-content:center;
+  padding:24px;
+}
+.login-card{
+  width:100%;max-width:340px;
+  background:rgba(18,18,28,0.9);
+  border:1px solid rgba(255,255,255,0.09);
+  border-radius:26px;
+  padding:32px 26px 28px;
+  position:relative;overflow:hidden;
+  box-shadow:0 30px 70px rgba(0,0,0,0.55),0 0 0 1px rgba(255,45,85,0.06);
+  backdrop-filter:blur(20px);
+  animation:cardPop 0.5s cubic-bezier(0.34,1.56,0.64,1) both;
+}
+@keyframes cardPop{from{opacity:0;transform:scale(0.9) translateY(20px);}to{opacity:1;transform:none;}}
+.login-card::before{
+  content:'';position:absolute;top:-70px;right:-70px;
+  width:200px;height:200px;
+  background:radial-gradient(circle,rgba(255,45,85,0.18),transparent 70%);
+  pointer-events:none;animation:glowSpin 8s linear infinite;
+}
+.login-card::after{
+  content:'';position:absolute;bottom:-50px;left:-50px;
+  width:160px;height:160px;
+  background:radial-gradient(circle,rgba(77,166,255,0.1),transparent 70%);
+  pointer-events:none;
+}
+@keyframes glowSpin{0%{transform:rotate(0deg);}100%{transform:rotate(360deg);}}
+.logo-box{
+  width:54px;height:54px;border-radius:16px;
+  background:linear-gradient(135deg,#ff2d55,#c40040);
+  display:flex;align-items:center;justify-content:center;
+  font-size:24px;margin-bottom:18px;
+  box-shadow:0 10px 28px rgba(255,45,85,0.4);
+  animation:logoBounce 0.5s 0.1s cubic-bezier(0.34,1.56,0.64,1) both;
+}
+.app-name{
+  font-size:30px;font-weight:900;letter-spacing:-1px;margin-bottom:4px;
+  background:linear-gradient(135deg,#fff,rgba(255,100,130,0.7));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+.app-sub{font-size:12px;color:rgba(240,240,248,0.4);margin-bottom:24px;}
+.field-wrap{position:relative;margin-bottom:0;}
+.field-icon{position:absolute;left:13px;top:50%;transform:translateY(-50%);font-size:15px;pointer-events:none;}
+/* ─── FORM ELEMENTS ─── */
+.field{
+  background:#1a1a2a;
+  border:1.5px solid rgba(255,255,255,0.07);
+  border-radius:12px;
+  padding:13px 16px 13px 40px;
+  width:100%;color:#f0f0f8;
+  font-family:'Plus Jakarta Sans',sans-serif;
+  font-size:14px;font-weight:500;outline:none;
+  transition:border-color 0.2s,box-shadow 0.2s;
+  display:block;
+}
+.field::placeholder{color:rgba(240,240,248,0.22);}
+.field:focus{
+  border-color:#ff2d55;
+  box-shadow:0 0 0 3px rgba(255,45,85,0.18),0 0 20px rgba(255,45,85,0.08);
+}
+.fields{display:flex;flex-direction:column;gap:10px;}
+.login-divider{
+  display:flex;align-items:center;gap:10px;
+  margin:4px 0;
+}
+.login-divider::before,.login-divider::after{
+  content:'';flex:1;height:1px;background:rgba(255,255,255,0.07);
+}
+.login-divider span{font-size:11px;color:rgba(240,240,248,0.25);font-weight:600;}
+
+/* ─── BUTTONS ─── */
+.btn-red{
+  display:flex;align-items:center;justify-content:center;
+  width:100%;padding:14px;
+  background:linear-gradient(135deg,#ff2d55,#cc0040);
+  color:white;font-family:'Plus Jakarta Sans',sans-serif;
+  font-size:14px;font-weight:700;
+  border:none;border-radius:12px;cursor:pointer;
+  box-shadow:0 6px 20px rgba(255,45,85,0.3);
+  transition:transform 0.15s,box-shadow 0.2s;
+  margin-top:6px;
+}
+.btn-red:active{transform:scale(0.97);}
+
+.btn-outline{
+  display:flex;align-items:center;justify-content:center;
+  width:100%;padding:13px;
+  background:#1e1e2e;
+  color:#f0f0f8;font-family:'Plus Jakarta Sans',sans-serif;
+  font-size:13px;font-weight:600;
+  border:1.5px solid rgba(255,255,255,0.1);
+  border-radius:12px;cursor:pointer;
+  transition:background 0.2s;
+}
+.btn-outline:active{background:#252535;}
+
+.btn-green{
+  display:flex;align-items:center;justify-content:center;
+  width:100%;padding:13px;
+  background:linear-gradient(135deg,#30d158,#1a9e40);
+  color:#050f08;font-family:'Plus Jakarta Sans',sans-serif;
+  font-size:14px;font-weight:700;
+  border:none;border-radius:12px;cursor:pointer;
+  box-shadow:0 6px 18px rgba(48,209,88,0.3);
+  transition:transform 0.15s;
+}
+.btn-green:active{transform:scale(0.97);}
+
+/* ─── BACK BTN ─── */
+.back{
+  display:inline-flex;align-items:center;gap:6px;
+  color:rgba(240,240,248,0.5);font-weight:600;font-size:13px;
+  cursor:pointer;padding:6px 0;
+  transition:color 0.2s;
+  background:none;border:none;
+}
+.back:hover{color:#f0f0f8;}
+
+/* ─── PAGE HEADER ─── */
+.phead{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:52px 20px 14px;
+  position:sticky;top:0;z-index:10;
+  background:linear-gradient(to bottom,rgba(10,10,18,0.98) 70%,transparent);
+}
+
+/* ─── CARD ─── */
+.card{
+  background:#14141e;
+  border:1px solid rgba(255,255,255,0.08);
+  border-radius:18px;
+  padding:18px;
+}
+
+/* ─── BADGE LIVE ─── */
+.live-badge{
+  display:inline-flex;align-items:center;gap:5px;
+  background:rgba(48,209,88,0.1);
+  border:1px solid rgba(48,209,88,0.25);
+  color:#30d158;
+  font-size:10px;font-weight:700;letter-spacing:0.8px;
+  text-transform:uppercase;
+  padding:5px 11px;border-radius:20px;
+}
+.live-dot{width:6px;height:6px;background:#30d158;border-radius:50%;animation:blink 1.2s infinite;}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:0.15;}}
+
+/* ─── DASHBOARD ─── */
+.dash-top{padding:50px 20px 16px;}
+.avatar{
+  width:42px;height:42px;border-radius:13px;
+  background:linear-gradient(135deg,#ff2d55,#ff6b9d);
+  display:flex;align-items:center;justify-content:center;
+  font-weight:900;font-size:16px;
+  box-shadow:0 4px 16px rgba(255,45,85,0.3);
+}
+.status-bar{
+  margin:0 20px 16px;
+  padding:13px 16px 13px 20px;
+  background:rgba(48,209,88,0.08);
+  border:1px solid rgba(48,209,88,0.2);
+  border-radius:12px;
+  display:flex;align-items:center;justify-content:space-between;
+  border-left:3px solid #30d158;
+  position:relative;
+}
+
+/* ─── FEATURE GRID ─── */
+.feat-grid{
+  display:grid;grid-template-columns:1fr 1fr;
+  gap:10px;padding:0 20px;margin-bottom:16px;
+}
+.feat-tile{
+  border-radius:18px;padding:18px 15px;
+  cursor:pointer;position:relative;
+  overflow:hidden;border:1px solid transparent;
+  transition:transform 0.15s;
+}
+.feat-tile:active{transform:scale(0.96);}
+
+.ft-green{background:linear-gradient(145deg,rgba(48,209,88,0.1),rgba(17,17,24,0.9));border-color:rgba(48,209,88,0.2);}
+.ft-blue {background:linear-gradient(145deg,rgba(77,166,255,0.1),rgba(17,17,24,0.9));border-color:rgba(77,166,255,0.2);}
+.ft-purple{background:linear-gradient(145deg,rgba(191,90,242,0.1),rgba(17,17,24,0.9));border-color:rgba(191,90,242,0.2);}
+.ft-red  {background:linear-gradient(145deg,rgba(255,45,85,0.12),rgba(17,17,24,0.9));border-color:rgba(255,45,85,0.25);}
+
+.feat-icon{font-size:26px;display:block;margin-bottom:10px;}
+.feat-name{font-size:13px;font-weight:700;}
+.feat-desc{font-size:10px;color:rgba(240,240,248,0.4);margin-top:2px;}
+.feat-arr{position:absolute;top:14px;right:13px;font-size:16px;color:rgba(255,255,255,0.15);}
+
+/* ─── GUARDIANS ─── */
+.guardians{padding:0 20px 16px;}
+.g-chips{display:flex;gap:9px;margin-top:10px;}
+.g-chip{
+  width:46px;height:46px;border-radius:13px;
+  background:#1e1e2e;border:1.5px solid rgba(255,255,255,0.08);
+  display:flex;align-items:center;justify-content:center;
+  font-weight:800;font-size:15px;cursor:pointer;
+  position:relative;
+}
+.g-chip.on{border-color:#30d158;color:#30d158;background:rgba(48,209,88,0.08);}
+.g-chip.add{border-style:dashed;color:rgba(240,240,248,0.25);}
+.g-dot{position:absolute;bottom:0;right:0;width:8px;height:8px;background:#30d158;border-radius:50%;border:1.5px solid #0a0a12;}
+
+/* ─── BOTTOM NAV ─── */
+.bnav{
+  position:fixed;bottom:0;left:0;right:0;
+  background:rgba(10,10,18,0.97);
+  border-top:1px solid rgba(255,255,255,0.07);
+  display:flex;padding:10px 0 22px;z-index:100;
+}
+.ni{
+  flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;
+  cursor:pointer;padding:6px 0;color:rgba(240,240,248,0.25);
+  transition:color 0.2s;
+  background:none;border:none;
+}
+.ni svg{width:20px;height:20px;}
+.ni-lbl{font-size:9px;font-weight:700;letter-spacing:0.4px;font-family:'Plus Jakarta Sans',sans-serif;}
+.ni.on{color:#ff2d55;}
+
+/* ─── MAP WRAPPER ─── */
+.map-wrap{
+  margin:0 20px;border-radius:18px;overflow:hidden;
+  border:1px solid rgba(255,255,255,0.07);
+}
+.leaflet-tile{filter:brightness(0.8) saturate(0.5) hue-rotate(195deg);}
+.leaflet-control-attribution{display:none!important;}
+.map-foot{padding:12px 16px;display:flex;align-items:center;gap:9px;background:#14141e;}
+.loc-dot{width:8px;height:8px;border-radius:50%;background:#30d158;flex-shrink:0;animation:blink 1.5s infinite;}
+.spacer{height:78px;}
+
+/* ─── ROUTE LEGEND ─── */
+.r-legend{padding:0 20px 12px;display:flex;flex-direction:column;gap:7px;}
+.r-item{display:flex;align-items:center;gap:9px;font-size:12px;color:rgba(240,240,248,0.5);}
+.r-line{width:24px;height:4px;border-radius:2px;}
+.r-tip{
+  margin:0 20px 12px;padding:12px 14px;
+  border-radius:12px;
+  border:1px solid rgba(48,209,88,0.22);
+  background:rgba(48,209,88,0.07);
+  display:none;
+  align-items:center;gap:9px;
+}
+.r-tip-text{font-size:12px;color:#30d158;font-weight:600;line-height:1.4;}
+
+/* ─── FAKE CALL ─── */
+.c-preset{
+  background:#14141e;border:1.5px solid rgba(255,255,255,0.08);
+  border-radius:12px;padding:13px 14px;
+  display:flex;align-items:center;justify-content:space-between;
+  cursor:pointer;transition:border-color 0.2s;
+}
+.c-preset.picked{border-color:#30d158;background:rgba(48,209,88,0.05);}
+.c-delays{display:flex;gap:7px;overflow-x:auto;padding-bottom:2px;}
+.d-chip{
+  flex-shrink:0;padding:7px 14px;border-radius:20px;
+  background:#1e1e2e;border:1.5px solid rgba(255,255,255,0.08);
+  font-size:12px;font-weight:600;cursor:pointer;
+  color:rgba(240,240,248,0.4);transition:all 0.2s;
+  font-family:'Plus Jakarta Sans',sans-serif;
+}
+.d-chip.picked{background:rgba(255,45,85,0.12);border-color:#ff2d55;color:#ff2d55;}
+
+/* ─── SOS PAGE ─── */
+#sosPage{
+  background:
+    radial-gradient(ellipse 65% 45% at 50% 25%, rgba(255,45,85,0.13) 0%, transparent 60%),
+    #0a0a12;
+  overflow-y:auto;
+}
+.sos-wrap{display:flex;flex-direction:column;align-items:center;gap:20px;padding:14px 20px;}
+.sos-ring{
+  position:relative;width:190px;height:190px;
+  filter:drop-shadow(0 0 20px rgba(255,45,85,0.3));
+  flex-shrink:0;
+}
+.sos-ring::before{
+  content:'';position:absolute;
+  top:-16px;left:-16px;right:-16px;bottom:-16px;
+  border-radius:50%;border:1.5px solid rgba(255,45,85,0.2);
+  animation:pulse 2s ease-out infinite;
+}
+.sos-ring::after{
+  content:'';position:absolute;
+  top:-38px;left:-38px;right:-38px;bottom:-38px;
+  border-radius:50%;border:1px solid rgba(255,45,85,0.1);
+  animation:pulse 2s ease-out infinite 0.4s;
+}
+@keyframes pulse{0%{transform:scale(0.95);opacity:1;}100%{transform:scale(1.1);opacity:0;}}
+.sos-btn{
+  width:100%;height:100%;border-radius:50%;border:none;cursor:pointer;
+  background:radial-gradient(circle at 33% 33%, #ff5570, #c80030);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  box-shadow:0 0 45px rgba(255,45,85,0.5), inset 0 2px 0 rgba(255,255,255,0.15);
+  transition:transform 0.12s;user-select:none;
+}
+.sos-btn:active{transform:scale(0.93);}
+.sos-lbl{font-size:32px;font-weight:900;color:white;letter-spacing:3px;}
+.sos-hint{font-size:9.5px;color:rgba(255,255,255,0.6);margin-top:3px;letter-spacing:0.5px;}
+.sos-num{
+  display:none;position:absolute;
+  top:50%;left:50%;transform:translate(-50%,-50%);
+  font-size:52px;font-weight:900;color:white;z-index:5;
+  text-shadow:0 0 20px rgba(255,45,85,0.9);
+}
+.sos-row{
+  display:flex;align-items:center;gap:10px;
+  padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.06);
+}
+
+/* ─── CALL OVERLAY ─── */
+#callOverlay{
+  display:none;
+  position:fixed;top:0;left:0;right:0;bottom:0;z-index:999;
+  background:linear-gradient(180deg,#08000f,#0c0d1a 50%,#070a10);
+  flex-direction:column;align-items:center;justify-content:space-between;
+  padding:70px 36px 54px;
+}
+#callOverlay.show{display:flex;}
+.c-ripple{
+  position:relative;width:140px;height:140px;
+  display:flex;align-items:center;justify-content:center;
+}
+.c-ripple::before,.c-ripple::after{
+  content:'';position:absolute;
+  border-radius:50%;border:1px solid rgba(255,255,255,0.07);
+  animation:ripple 2s ease-out infinite;
+}
+.c-ripple::after{animation-delay:0.7s;}
+@keyframes ripple{0%{top:0;left:0;right:0;bottom:0;opacity:1;}100%{top:-35px;left:-35px;right:-35px;bottom:-35px;opacity:0;}}
+.c-avatar{
+  width:86px;height:86px;border-radius:24px;
+  background:linear-gradient(135deg,#1c183a,#282460);
+  display:flex;align-items:center;justify-content:center;
+  font-size:32px;font-weight:900;
+}
+.c-actions{display:flex;gap:32px;}
+.c-btn{
+  width:64px;height:64px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:22px;cursor:pointer;border:none;
+  transition:transform 0.12s;
+}
+.c-btn:active{transform:scale(0.88);}
+.c-end   {background:linear-gradient(135deg,#ff4038,#cc1400);box-shadow:0 6px 20px rgba(255,64,56,0.4);}
+.c-accept{background:linear-gradient(135deg,#30d158,#1a9e3e);box-shadow:0 6px 20px rgba(48,209,88,0.4);}
+
+/* ─── SOS ALERT ─── */
+#sosAlert{
+  display:none;
+  position:fixed;top:0;left:0;right:0;bottom:0;z-index:999;
+  background:radial-gradient(ellipse at 50% 20%, rgba(180,0,40,0.2), transparent 55%), #07000b;
+  flex-direction:column;align-items:center;justify-content:center;
+  gap:14px;padding:0 22px;
+}
+#sosAlert.show{display:flex;}
+.a-row{
+  width:100%;border-radius:12px;padding:12px 14px;
+  display:flex;gap:10px;align-items:center;border:1px solid transparent;
+}
+.a-row:nth-child(1){animation:rowIn 0.4s 0.05s both;}
+.a-row:nth-child(2){animation:rowIn 0.4s 0.15s both;}
+.a-row:nth-child(3){animation:rowIn 0.4s 0.25s both;}
+.a-row:nth-child(4){animation:rowIn 0.4s 0.35s both;}
+@keyframes rowIn{from{opacity:0;transform:translateX(-12px);}to{opacity:1;transform:none;}}
+
+/* ─── COLOUR TAGS ─── */
+.tag{font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;white-space:nowrap;}
+.tag-green{color:#30d158;background:rgba(48,209,88,0.1);}
+.tag-blue {color:#4da6ff;background:rgba(77,166,255,0.1);}
+.tag-warn {color:#ffd60a;background:rgba(255,214,10,0.1);}
+
+/* ─── REGISTER ─── */
+/* steps replaced by reg-steps */
+
+/* utility */
+.lbl{font-size:10.5px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:rgba(240,240,248,0.4);}
+.row{display:flex;align-items:center;justify-content:space-between;}
+
+/* ─── HAMBURGER BUTTON ─── */
+.hamburger{
+  width:38px;height:38px;border-radius:11px;
+  background:#1e1e2e;border:1px solid rgba(255,255,255,0.08);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;
+  cursor:pointer;
+}
+.hbar{width:16px;height:2px;background:#f0f0f8;border-radius:2px;transition:all 0.25s;}
+
+/* ─── DRAWER OVERLAY ─── */
+#drawerOverlay{
+  display:none;
+  position:fixed;top:0;left:0;right:0;bottom:0;
+  background:rgba(0,0,0,0.55);
+  z-index:500;
+}
+#drawerOverlay.show{display:block;}
+
+/* ─── SIDE DRAWER ─── */
+#drawer{
+  position:fixed;top:0;left:0;bottom:0;
+  width:280px;
+  background:#0e0e18;
+  border-right:1px solid rgba(255,255,255,0.07);
+  z-index:501;
+  transform:translateX(-100%);
+  transition:transform 0.28s cubic-bezier(0.4,0,0.2,1);
+  display:flex;flex-direction:column;
+  overflow-y:auto;
+}
+#drawer.open{transform:translateX(0);}
+
+/* drawer header */
+.drw-head{
+  padding:52px 20px 20px;
+  background:linear-gradient(180deg,rgba(255,45,85,0.1),transparent);
+  border-bottom:1px solid rgba(255,255,255,0.06);
+}
+.drw-user{display:flex;align-items:center;gap:13px;margin-top:4px;}
+.drw-avatar{
+  width:52px;height:52px;border-radius:15px;
+  background:linear-gradient(135deg,#ff2d55,#ff6b9d);
+  display:flex;align-items:center;justify-content:center;
+  font-weight:900;font-size:20px;
+  box-shadow:0 4px 16px rgba(255,45,85,0.3);
+  flex-shrink:0;
+}
+.drw-name{font-size:16px;font-weight:800;line-height:1.2;}
+.drw-status{font-size:11px;color:rgba(240,240,248,0.4);margin-top:2px;}
+
+/* section label */
+.drw-section{
+  font-size:9.5px;font-weight:700;letter-spacing:1.8px;text-transform:uppercase;
+  color:rgba(240,240,248,0.25);
+  padding:18px 20px 8px;
+}
+
+/* menu item */
+.drw-item{
+  display:flex;align-items:center;gap:13px;
+  padding:13px 20px;cursor:pointer;
+  transition:background 0.15s;
+  border:none;background:none;width:100%;text-align:left;
+  color:#f0f0f8;font-family:'Plus Jakarta Sans',sans-serif;
+}
+.drw-item:hover,.drw-item:active{background:rgba(255,255,255,0.04);}
+.drw-item.active-item{background:rgba(255,45,85,0.08);}
+.drw-icon{
+  width:38px;height:38px;border-radius:11px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:17px;flex-shrink:0;
+}
+.di-green {background:rgba(48,209,88,0.12);border:1px solid rgba(48,209,88,0.2);}
+.di-blue  {background:rgba(77,166,255,0.12);border:1px solid rgba(77,166,255,0.2);}
+.di-purple{background:rgba(191,90,242,0.12);border:1px solid rgba(191,90,242,0.2);}
+.di-red   {background:rgba(255,45,85,0.12); border:1px solid rgba(255,45,85,0.2);}
+.di-yellow{background:rgba(255,214,10,0.1); border:1px solid rgba(255,214,10,0.2);}
+.di-gray  {background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);}
+.drw-label{font-size:13.5px;font-weight:600;}
+.drw-sub  {font-size:10.5px;color:rgba(240,240,248,0.35);margin-top:1px;}
+.drw-arr  {margin-left:auto;color:rgba(240,240,248,0.2);font-size:16px;}
+
+/* divider */
+.drw-div{height:1px;background:rgba(255,255,255,0.05);margin:6px 20px;}
+
+/* drawer bottom */
+.drw-foot{
+  margin-top:auto;padding:16px 20px 32px;
+  border-top:1px solid rgba(255,255,255,0.06);
+}
+.drw-logout{
+  display:flex;align-items:center;gap:12px;
+  padding:12px 16px;border-radius:12px;
+  background:rgba(255,45,85,0.07);border:1px solid rgba(255,45,85,0.15);
+  cursor:pointer;width:100%;
+  font-family:'Plus Jakarta Sans',sans-serif;color:#ff2d55;
+  font-size:13.5px;font-weight:600;
+  transition:background 0.15s;
+}
+.drw-logout:hover{background:rgba(255,45,85,0.12);}
+
+/* ─── HAMBURGER ─── */
+.hamburger{width:38px;height:38px;border-radius:11px;background:#1e1e2e;border:1px solid rgba(255,255,255,0.08);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;cursor:pointer;}
+.hbar{width:16px;height:2px;background:#f0f0f8;border-radius:2px;}
+
+/* ─── DRAWER OVERLAY ─── */
+#drawerOverlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.6);z-index:500;}
+#drawerOverlay.show{display:block;}
+
+/* ─── SIDE DRAWER ─── */
+#drawer{position:fixed;top:0;left:0;bottom:0;width:280px;background:#0e0e18;border-right:1px solid rgba(255,255,255,0.07);z-index:501;transform:translateX(-100%);transition:transform 0.28s cubic-bezier(0.4,0,0.2,1);display:flex;flex-direction:column;overflow-y:auto;}
+#drawer.open{transform:translateX(0);}
+.drw-head{padding:52px 20px 20px;background:linear-gradient(180deg,rgba(255,45,85,0.1),transparent);border-bottom:1px solid rgba(255,255,255,0.06);}
+.drw-avatar{width:52px;height:52px;border-radius:15px;background:linear-gradient(135deg,#ff2d55,#ff6b9d);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:20px;box-shadow:0 4px 16px rgba(255,45,85,0.3);flex-shrink:0;}
+.drw-section{font-size:9.5px;font-weight:700;letter-spacing:1.8px;text-transform:uppercase;color:rgba(240,240,248,0.25);padding:16px 20px 7px;}
+.drw-item{display:flex;align-items:center;gap:13px;padding:12px 20px;cursor:pointer;transition:background 0.15s;border:none;background:none;width:100%;text-align:left;color:#f0f0f8;font-family:'Plus Jakarta Sans',sans-serif;}
+.drw-item:active{background:rgba(255,255,255,0.04);}
+.drw-item.drw-active{background:rgba(255,45,85,0.08);}
+.drw-icon{width:38px;height:38px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;}
+.di-green{background:rgba(48,209,88,0.12);border:1px solid rgba(48,209,88,0.2);}
+.di-blue{background:rgba(77,166,255,0.12);border:1px solid rgba(77,166,255,0.2);}
+.di-purple{background:rgba(191,90,242,0.12);border:1px solid rgba(191,90,242,0.2);}
+.di-red{background:rgba(255,45,85,0.12);border:1px solid rgba(255,45,85,0.2);}
+.di-yellow{background:rgba(255,214,10,0.1);border:1px solid rgba(255,214,10,0.2);}
+.di-gray{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);}
+.drw-lbl{font-size:13.5px;font-weight:600;}
+.drw-sub{font-size:10.5px;color:rgba(240,240,248,0.35);margin-top:1px;}
+.drw-arr{margin-left:auto;color:rgba(240,240,248,0.2);font-size:16px;}
+.drw-div{height:1px;background:rgba(255,255,255,0.05);margin:6px 20px;}
+.drw-foot{margin-top:auto;padding:16px 20px 32px;border-top:1px solid rgba(255,255,255,0.06);}
+.drw-logout{display:flex;align-items:center;gap:12px;padding:12px 16px;border-radius:12px;background:rgba(255,45,85,0.07);border:1px solid rgba(255,45,85,0.15);cursor:pointer;width:100%;font-family:'Plus Jakarta Sans',sans-serif;color:#ff2d55;font-size:13.5px;font-weight:600;}
+
+/* GPS marker pulse */
+@keyframes gpsPulse{0%{box-shadow:0 0 0 0 rgba(255,45,85,0.5),0 0 0 0 rgba(255,45,85,0.2);}100%{box-shadow:0 0 0 8px rgba(255,45,85,0),0 0 0 16px rgba(255,45,85,0);}}
+</style>
+</head>
+<body>
+
+<!-- ════════════ SPLASH ════════════ -->
+<div id="splashPage" class="screen active">
+  <div class="splash-bg"></div>
+  <div class="splash-particles" id="splashParticles"></div>
+  <div class="splash-center">
+    <div class="splash-logo">🛡️</div>
+    <div class="splash-title">SAKHI</div>
+    <div class="splash-tagline">Your personal safety companion</div>
+    <div class="splash-btn">
+      <button onclick="go('registerPage')">Create Account →</button>
+    </div>
+    <div class="splash-login-link">
+      Already have an account?
+      <span onclick="go('loginPage')" style="color:#ff2d55;font-weight:700;cursor:pointer;">Sign In</span>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════ LOGIN ════════════ -->
+<div id="loginPage" class="screen">
+  <div class="login-card">
+    <div class="logo-box">🛡️</div>
+    <div class="app-name">SAKHI</div>
+    <div class="app-sub">Welcome back 👋</div>
+    <div class="fields">
+      <div class="field-wrap">
+        <span class="field-icon">📱</span>
+        <input class="field" type="text" id="loginPhone" placeholder="Phone number or username">
+      </div>
+      <div class="field-wrap">
+        <span class="field-icon">🔒</span>
+        <input class="field" type="password" id="loginPass" placeholder="Password">
+      </div>
+      <button class="btn-red" onclick="doLogin()" style="margin-top:4px;">Sign In →</button>
+      <div class="login-divider"><span>or</span></div>
+      <button onclick="go('registerPage')" style="width:100%;padding:12px;background:transparent;border:1.5px solid rgba(255,255,255,0.1);border-radius:12px;color:rgba(240,240,248,0.6);font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;">Create new account</button>
+      <p style="text-align:center;font-size:11.5px;color:rgba(240,240,248,0.25);margin-top:6px;">
+        <span onclick="showToast('Password reset sent to your number')" style="cursor:pointer;color:rgba(255,45,85,0.6);">Forgot password?</span>
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════ REGISTER ════════════ -->
+<div id="registerPage" class="screen">
+  <div class="reg-hero">
+    <button class="back" onclick="go('splashPage')" style="position:absolute;top:52px;left:20px;">
+      <svg width="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 12H5M12 5l-7 7 7 7"/></svg>
+      Back
+    </button>
+    <div class="reg-logo">🛡️</div>
+    <div style="font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:rgba(240,240,248,0.3);margin-bottom:8px;">SAKHI Setup</div>
+    <div class="reg-steps">
+      <div class="reg-step-dot active" id="rsd0"></div>
+      <div class="reg-step-dot" id="rsd1"></div>
+      <div class="reg-step-dot" id="rsd2"></div>
+      <div class="reg-step-dot" id="rsd3"></div>
+    </div>
+    <div style="font-size:19px;font-weight:800;" id="regTitle">Create your account</div>
+    <div style="font-size:12px;color:rgba(240,240,248,0.4);margin-top:4px;" id="regSub">Step 1 of 3 · Personal details</div>
+  </div>
+
+  <!-- Step 1: Personal -->
+  <div class="reg-panel active" id="regStep1">
+    <div class="reg-field-wrap">
+      <span class="reg-field-icon">👤</span>
+      <input class="reg-field" type="text" id="rFullName" placeholder="Your full name">
+    </div>
+    <div class="reg-field-wrap">
+      <span class="reg-field-icon">📱</span>
+      <input class="reg-field" type="tel" id="rPhone" placeholder="Your mobile number">
+    </div>
+    <div class="reg-field-wrap">
+      <span class="reg-field-icon">🔒</span>
+      <input class="reg-field" type="password" id="rPass" placeholder="Create a password">
+    </div>
+    <button class="reg-next" onclick="regNext(1)">Next →</button>
+  </div>
+
+  <!-- Step 2: Guardian -->
+  <div class="reg-panel" id="regStep2">
+    <div style="font-size:13px;color:rgba(240,240,248,0.45);margin-bottom:16px;line-height:1.5;">Add a trusted person who will be alerted in emergencies. You can add more later.</div>
+    <div class="reg-field-wrap">
+      <span class="reg-field-icon">👥</span>
+      <input class="reg-field" type="text" id="rGName" placeholder="Guardian's name (Mom, Dad…)">
+    </div>
+    <div class="reg-field-wrap">
+      <span class="reg-field-icon">📱</span>
+      <input class="reg-field" type="tel" id="rGPhone" placeholder="Their phone number">
+    </div>
+    <div class="reg-field-wrap">
+      <span class="reg-field-icon">💛</span>
+      <input class="reg-field" type="text" id="rGRel" placeholder="Relationship (Mother, Father…)">
+    </div>
+    <button class="reg-next" onclick="regNext(2)">Next →</button>
+    <button class="reg-skip" onclick="regNext(2,true)">Skip for now</button>
+  </div>
+
+  <!-- Step 3: Permissions -->
+  <div class="reg-panel" id="regStep3">
+    <div style="font-size:13px;color:rgba(240,240,248,0.45);margin-bottom:20px;line-height:1.5;">SAKHI needs a few permissions to keep you safe.</div>
+    <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:24px;">
+      <div style="display:flex;align-items:center;gap:13px;padding:14px;background:#14141e;border:1px solid rgba(48,209,88,0.2);border-radius:13px;">
+        <span style="font-size:22px;flex-shrink:0;">📍</span>
+        <div style="flex:1;"><div style="font-size:13.5px;font-weight:700;">Location Access</div><div style="font-size:10.5px;color:rgba(240,240,248,0.4);margin-top:1px;">For real-time GPS tracking &amp; SOS</div></div>
+        <div onclick="grantPerm(this)" style="width:40px;height:22px;border-radius:11px;background:rgba(255,255,255,0.1);border:1.5px solid rgba(255,255,255,0.1);position:relative;cursor:pointer;flex-shrink:0;"><div style="width:16px;height:16px;background:white;border-radius:50%;position:absolute;top:2px;left:2px;transition:left 0.2s;"></div></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:13px;padding:14px;background:#14141e;border:1px solid rgba(255,214,10,0.2);border-radius:13px;">
+        <span style="font-size:22px;flex-shrink:0;">🔔</span>
+        <div style="flex:1;"><div style="font-size:13.5px;font-weight:700;">Notifications</div><div style="font-size:10.5px;color:rgba(240,240,248,0.4);margin-top:1px;">Alert you &amp; guardians instantly</div></div>
+        <div onclick="grantPerm(this)" style="width:40px;height:22px;border-radius:11px;background:rgba(255,255,255,0.1);border:1.5px solid rgba(255,255,255,0.1);position:relative;cursor:pointer;flex-shrink:0;"><div style="width:16px;height:16px;background:white;border-radius:50%;position:absolute;top:2px;left:2px;transition:left 0.2s;"></div></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:13px;padding:14px;background:#14141e;border:1px solid rgba(77,166,255,0.2);border-radius:13px;">
+        <span style="font-size:22px;flex-shrink:0;">🎤</span>
+        <div style="flex:1;"><div style="font-size:13.5px;font-weight:700;">Microphone</div><div style="font-size:10.5px;color:rgba(240,240,248,0.4);margin-top:1px;">For fake call audio</div></div>
+        <div onclick="grantPerm(this)" style="width:40px;height:22px;border-radius:11px;background:rgba(255,255,255,0.1);border:1.5px solid rgba(255,255,255,0.1);position:relative;cursor:pointer;flex-shrink:0;"><div style="width:16px;height:16px;background:white;border-radius:50%;position:absolute;top:2px;left:2px;transition:left 0.2s;"></div></div>
+      </div>
+    </div>
+    <button class="reg-next" onclick="regFinish()">Complete Setup ✓</button>
+  </div>
+
+  <!-- Step 4: Success -->
+  <div class="reg-panel" id="regStep4">
+    <div class="reg-success">
+      <div class="reg-tick">✓</div>
+      <div style="font-size:22px;font-weight:800;margin-bottom:8px;">You're all set!</div>
+      <div style="font-size:13px;color:rgba(240,240,248,0.45);line-height:1.6;margin-bottom:32px;">Your SAKHI account is ready.<br>Stay safe out there 💪</div>
+      <button class="reg-next" onclick="regGoHome()">Enter SAKHI →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════ DASHBOARD ════════════ -->
+<div id="menuPage" class="screen">
+  <div class="dash-top">
+    <div class="row" style="margin-bottom:14px;">
+      <div style="display:flex;align-items:center;gap:12px;">
+        <div class="hamburger" onclick="openDrawer()">
+          <div class="hbar"></div>
+          <div class="hbar" style="width:12px;align-self:flex-start;margin-left:2px;"></div>
+          <div class="hbar"></div>
+        </div>
+        <div>
+          <div class="lbl">Good Evening</div>
+          <div style="font-size:18px;font-weight:700;margin-top:2px;">Stay Safe Today 👋</div>
+        </div>
+      </div>
+      <div class="avatar" onclick="openDrawer()">A</div>
+    </div>
+  </div>
+
+  <div class="status-bar">
+    <div style="display:flex;align-items:center;gap:10px;">
+      <span style="font-size:16px;">✅</span>
+      <div>
+        <div style="font-size:12.5px;font-weight:700;color:#30d158;">All Clear</div>
+        <div style="font-size:10.5px;color:rgba(240,240,248,0.4);">2 guardians online</div>
+      </div>
+    </div>
+    <div class="live-badge"><div class="live-dot"></div>Live</div>
+  </div>
+
+  <div class="feat-grid">
+    <div class="feat-tile ft-green" onclick="go('mapPage')">
+      <span class="feat-arr">›</span>
+      <span class="feat-icon">🗺️</span>
+      <div class="feat-name" style="color:#5be08a;">Live GPS</div>
+      <div class="feat-desc">Real-time tracking</div>
+    </div>
+    <div class="feat-tile ft-blue" onclick="go('routePage')">
+      <span class="feat-arr">›</span>
+      <span class="feat-icon">🛡️</span>
+      <div class="feat-name" style="color:#6fbfff;">Safe Route</div>
+      <div class="feat-desc">AI path planner</div>
+    </div>
+    <div class="feat-tile ft-purple" onclick="go('callPage')">
+      <span class="feat-arr">›</span>
+      <span class="feat-icon">📞</span>
+      <div class="feat-name" style="color:#d07ff5;">Fake Call</div>
+      <div class="feat-desc">Escape any situation</div>
+    </div>
+    <div class="feat-tile ft-red" onclick="go('sosPage')">
+      <span class="feat-arr">›</span>
+      <span class="feat-icon">🚨</span>
+      <div class="feat-name" style="color:#ff2d55;">SOS Alert</div>
+      <div class="feat-desc" style="color:rgba(255,45,85,0.5);">Hold to trigger</div>
+    </div>
+  </div>
+
+  <div class="guardians">
+    <div class="lbl">Guardians</div>
+    <div class="g-chips">
+      <div style="position:relative;">
+        <div class="g-chip on">M</div><div class="g-dot"></div>
+      </div>
+      <div style="position:relative;">
+        <div class="g-chip on">D</div><div class="g-dot"></div>
+      </div>
+      <div class="g-chip add">+</div>
+    </div>
+    <div style="font-size:11px;color:rgba(240,240,248,0.22);margin-top:7px;">Tap + to add a guardian</div>
+  </div>
+  <div class="spacer"></div>
+
+  <div class="bnav">
+    <button class="ni on" id="ni0">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+      <span class="ni-lbl">Home</span>
+    </button>
+    <button class="ni" id="ni1" onclick="go('mapPage')">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+      <span class="ni-lbl">Map</span>
+    </button>
+    <button class="ni" id="ni2" onclick="go('routePage')">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/></svg>
+      <span class="ni-lbl">Route</span>
+    </button>
+    <button class="ni" id="ni3" onclick="go('sosPage')">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+      <span class="ni-lbl">SOS</span>
+    </button>
+  </div>
+</div>
+
+<!-- ════════════ MAP ════════════ -->
+<div id="mapPage" class="screen">
+  <div class="phead">
+    <button class="back" onclick="go('menuPage')">
+      <svg width="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 12H5M12 5l-7 7 7 7"/></svg>
+      Back
+    </button>
+    <div class="live-badge"><div class="live-dot"></div>Tracking</div>
+  </div>
+
+  <div class="map-wrap">
+    <div id="map" style="height:310px;"></div>
+    <div class="map-foot">
+      <div class="loc-dot"></div>
+      <div>
+        <div id="locTxt" style="font-size:12px;color:rgba(240,240,248,0.5);font-family:monospace;">Detecting location…</div>
+        <div id="locSub" style="font-size:10.5px;color:rgba(240,240,248,0.25);margin-top:1px;"></div>
+      </div>
+    </div>
+  </div>
+
+  <div style="padding:12px 20px;display:flex;gap:9px;">
+    <button class="btn-outline" style="font-size:12.5px;" onclick="shareLocation()">📤 Share Location</button>
+    <button class="btn-outline" style="font-size:12.5px;" onclick="go('routePage')">🛡️ Safe Route</button>
+  </div>
+
+  <div style="padding:0 20px;">
+    <div class="card">
+      <div class="lbl" style="margin-bottom:12px;">Nearby Safety</div>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div style="width:34px;height:34px;border-radius:10px;background:rgba(48,209,88,0.1);border:1px solid rgba(48,209,88,0.2);display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;">🏥</div>
+          <div><div style="font-size:12.5px;font-weight:600;">City Hospital</div><div style="font-size:10px;color:rgba(240,240,248,0.4);">0.4 km away</div></div>
+          <div class="tag tag-green" style="margin-left:auto;">OPEN</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div style="width:34px;height:34px;border-radius:10px;background:rgba(77,166,255,0.1);border:1px solid rgba(77,166,255,0.2);display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;">🚔</div>
+          <div><div style="font-size:12.5px;font-weight:600;">Police Station</div><div style="font-size:10px;color:rgba(240,240,248,0.4);">0.9 km away</div></div>
+          <div class="tag tag-blue" style="margin-left:auto;">24/7</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div style="width:34px;height:34px;border-radius:10px;background:rgba(255,214,10,0.08);border:1px solid rgba(255,214,10,0.15);display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;">🏪</div>
+          <div><div style="font-size:12.5px;font-weight:600;">SafeZone Store</div><div style="font-size:10px;color:rgba(240,240,248,0.4);">1.2 km away</div></div>
+          <div class="tag tag-warn" style="margin-left:auto;">11PM</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="spacer"></div>
+</div>
+
+<!-- ════════════ SAFE ROUTE ════════════ -->
+<div id="routePage" class="screen">
+  <div class="phead">
+    <button class="back" onclick="go('menuPage')">
+      <svg width="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 12H5M12 5l-7 7 7 7"/></svg>
+      Back
+    </button>
+    <span style="font-size:10.5px;color:#4da6ff;font-weight:700;background:rgba(77,166,255,0.1);padding:4px 10px;border-radius:20px;">AI Route</span>
+  </div>
+
+  <div style="padding:0 20px 12px;">
+    <div style="font-size:22px;font-weight:800;color:#6fbfff;margin-bottom:4px;">Safe Route</div>
+    <div style="font-size:12px;color:rgba(240,240,248,0.45);">Tap the map to plan a safe path.</div>
+  </div>
+
+  <div class="map-wrap" style="margin-bottom:12px;">
+    <div id="routeMap" style="height:280px;"></div>
+  </div>
+
+  <div class="r-legend">
+    <div class="lbl" style="margin-bottom:7px;">Safety Key</div>
+    <div class="r-item"><div class="r-line" style="background:#30d158;box-shadow:0 0 5px rgba(48,209,88,0.5);"></div>Safe — CCTV &amp; lit</div>
+    <div class="r-item"><div class="r-line" style="background:#ffd60a;"></div>Moderate</div>
+    <div class="r-item"><div class="r-line" style="background:#ff2d55;"></div>Caution — avoid</div>
+    <div class="r-item"><div class="r-line" style="background:rgba(255,255,255,0.25);border:1px dashed rgba(255,255,255,0.15);"></div>Your path</div>
+  </div>
+
+  <div class="r-tip" id="routeTip">
+    <span style="font-size:16px;flex-shrink:0;">✨</span>
+    <div class="r-tip-text" id="routeTipText">AI selects safest path.</div>
+  </div>
+
+  <div id="routeActs" style="display:none;padding:0 20px 8px;display:flex;gap:9px;">
+    <button class="btn-green" onclick="clearRoute()" style="font-size:13px;">✓ Navigate</button>
+    <button class="btn-outline" onclick="clearRoute()" style="font-size:13px;width:auto;flex:0 0 auto;padding:13px 16px;">✕</button>
+  </div>
+  <div class="spacer"></div>
+</div>
+
+<!-- ════════════ FAKE CALL ════════════ -->
+<div id="callPage" class="screen">
+  <div class="phead">
+    <button class="back" onclick="go('menuPage')">
+      <svg width="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 12H5M12 5l-7 7 7 7"/></svg>
+      Back
+    </button>
+    <span style="font-size:10.5px;color:#bf5af2;font-weight:700;background:rgba(191,90,242,0.1);padding:4px 10px;border-radius:20px;">Escape Tool</span>
+  </div>
+
+  <div style="padding:0 20px 20px;">
+    <div style="font-size:22px;font-weight:800;color:#d07ff5;margin-bottom:4px;">Fake Call</div>
+    <div style="font-size:12px;color:rgba(240,240,248,0.45);margin-bottom:20px;">Trigger a realistic call to escape.</div>
+
+    <div class="lbl" style="margin-bottom:9px;">Caller</div>
+    <div style="display:flex;flex-direction:column;gap:7px;margin-bottom:20px;">
+      <div class="c-preset picked" id="cp0" onclick="pickCaller(0,'Dad')">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div style="width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#2a1820,#3a2030);border:1px solid rgba(255,45,85,0.2);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;">D</div>
+          <div>
+            <div style="font-size:13px;font-weight:700;">Dad</div>
+            <div style="font-size:10.5px;color:rgba(240,240,248,0.4);">+91 91234 56789</div>
+          </div>
+        </div>
+        <span style="color:#30d158;font-size:15px;" id="ck0">✓</span>
+      </div>
+      <div class="c-preset" id="cp1" onclick="pickCaller(1,'Mom')">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div style="width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#182020,#20303a);border:1px solid rgba(48,209,88,0.2);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;">M</div>
+          <div>
+            <div style="font-size:13px;font-weight:700;">Mom</div>
+            <div style="font-size:10.5px;color:rgba(240,240,248,0.4);">+91 98765 43210</div>
+          </div>
+        </div>
+        <span style="color:#30d158;font-size:15px;display:none;" id="ck1">✓</span>
+      </div>
+      <div class="c-preset" id="cp2" onclick="pickCaller(2,'Priya')">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div style="width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#1e1030,#2d1a50);border:1px solid rgba(191,90,242,0.2);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;color:#bf5af2;">P</div>
+          <div>
+            <div style="font-size:13px;font-weight:700;">Priya <span style="font-weight:400;font-size:10.5px;color:rgba(240,240,248,0.4);">(Friend)</span></div>
+            <div style="font-size:10.5px;color:rgba(240,240,248,0.4);">+91 99900 11122</div>
+          </div>
+        </div>
+        <span style="color:#30d158;font-size:15px;display:none;" id="ck2">✓</span>
+      </div>
+    </div>
+
+    <div class="lbl" style="margin-bottom:9px;">Delay</div>
+    <div class="c-delays" style="margin-bottom:22px;">
+      <div class="d-chip picked" id="dc0" onclick="pickDelay(0,0)">Now</div>
+      <div class="d-chip" id="dc1" onclick="pickDelay(1,10)">10s</div>
+      <div class="d-chip" id="dc2" onclick="pickDelay(2,30)">30s</div>
+      <div class="d-chip" id="dc3" onclick="pickDelay(3,60)">1 min</div>
+      <div class="d-chip" id="dc4" onclick="pickDelay(4,120)">2 min</div>
+    </div>
+    <button class="btn-red" onclick="triggerCall()">📞 Trigger Call</button>
+  </div>
+</div>
+
+<!-- ════════════ SOS ════════════ -->
+<div id="sosPage" class="screen">
+  <div class="phead">
+    <button class="back" onclick="go('menuPage')">
+      <svg width="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 12H5M12 5l-7 7 7 7"/></svg>
+      Back
+    </button>
+    <span style="font-size:10.5px;color:#ff2d55;font-weight:700;background:rgba(255,45,85,0.1);padding:4px 10px;border-radius:20px;">Hold 3 sec</span>
+  </div>
+
+  <div class="sos-wrap">
+    <div style="text-align:center;">
+      <div style="font-size:12px;color:rgba(240,240,248,0.4);margin-bottom:3px;">Emergency Alert</div>
+      <div style="font-size:22px;font-weight:800;">Press &amp; Hold</div>
+    </div>
+
+    <div class="sos-ring">
+      <button class="sos-btn" id="sosBtn"
+        onmousedown="startSOS()" onmouseup="stopSOS()"
+        ontouchstart="startSOS(event)" ontouchend="stopSOS()">
+        <div class="sos-lbl">SOS</div>
+        <div class="sos-hint">HOLD 3 SEC</div>
+      </button>
+      <div class="sos-num" id="sosNum"></div>
+    </div>
+
+    <div style="width:100%;">
+      <div class="lbl" style="margin-bottom:9px;">Will Alert</div>
+      <div class="card" style="padding:4px 14px;">
+        <div class="sos-row">
+          <div style="width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,#2a1a2e,#3a2040);border:1px solid rgba(255,45,85,0.15);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;flex-shrink:0;">M</div>
+          <div>
+            <div style="font-size:12.5px;font-weight:700;">Mom</div>
+            <div style="font-size:10px;color:rgba(240,240,248,0.4);">+91 98765 43210</div>
+          </div>
+          <div class="tag tag-green" style="margin-left:auto;">● Online</div>
+        </div>
+        <div class="sos-row">
+          <div style="width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,#2a1a2e,#3a2040);border:1px solid rgba(255,45,85,0.15);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;flex-shrink:0;">D</div>
+          <div>
+            <div style="font-size:12.5px;font-weight:700;">Dad</div>
+            <div style="font-size:10px;color:rgba(240,240,248,0.4);">+91 91234 56789</div>
+          </div>
+          <div class="tag tag-green" style="margin-left:auto;">● Online</div>
+        </div>
+        <div class="sos-row">
+          <div style="width:34px;height:34px;border-radius:10px;background:rgba(77,166,255,0.1);border:1px solid rgba(77,166,255,0.25);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">🚔</div>
+          <div>
+            <div style="font-size:12.5px;font-weight:700;color:#4da6ff;">Police Control Room</div>
+            <div style="font-size:10px;color:rgba(240,240,248,0.4);">Dial 100 · Auto-called</div>
+          </div>
+          <div class="tag tag-blue" style="margin-left:auto;">24/7</div>
+        </div>
+        <div class="sos-row" style="border-bottom:none;">
+          <div style="width:34px;height:34px;border-radius:10px;background:rgba(48,209,88,0.1);border:1px solid rgba(48,209,88,0.25);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">🏥</div>
+          <div>
+            <div style="font-size:12.5px;font-weight:700;color:#30d158;">Nearest Hospital</div>
+            <div style="font-size:10px;color:rgba(240,240,248,0.4);">Dial 108 · Ambulance</div>
+          </div>
+          <div class="tag tag-green" style="margin-left:auto;">24/7</div>
+        </div>
+      </div>
+      <div style="font-size:10.5px;color:rgba(240,240,248,0.2);text-align:center;margin-top:7px;">Live location shared instantly</div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════ CALL OVERLAY ════════════ -->
+<div id="callOverlay">
+  <div style="text-align:center;">
+    <div style="color:rgba(255,255,255,0.3);font-size:13px;margin-bottom:14px;">Incoming Call</div>
+    <div class="c-ripple"><div class="c-avatar" id="callerAv">D</div></div>
+    <div style="font-size:20px;font-weight:700;margin-top:13px;" id="callerNm">Dad</div>
+    <div style="color:rgba(255,255,255,0.3);font-size:12px;margin-top:5px;">Mobile · Ringing…</div>
+  </div>
+  <div style="text-align:center;">
+    <div style="color:rgba(255,255,255,0.2);font-size:11px;margin-bottom:20px;">Slide up to answer</div>
+    <div class="c-actions">
+      <div style="text-align:center;">
+        <button class="c-btn c-end" onclick="endCall()">📵</button>
+        <div style="font-size:10px;color:rgba(255,255,255,0.3);margin-top:6px;">Decline</div>
+      </div>
+      <div style="text-align:center;">
+        <button class="c-btn c-accept" onclick="endCall()">📞</button>
+        <div style="font-size:10px;color:rgba(255,255,255,0.3);margin-top:6px;">Accept</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════ SOS ALERT ════════════ -->
+<div id="sosAlert">
+  <div style="font-size:52px;animation:rowIn 0.4s both;">🚨</div>
+  <div style="font-size:34px;font-weight:900;color:#ff2d55;text-align:center;letter-spacing:-1px;">SOS Sent!</div>
+  <div style="font-size:13px;color:rgba(240,240,248,0.5);text-align:center;line-height:1.6;">Emergency services &amp; guardians<br>alerted immediately.</div>
+  <div style="display:flex;flex-direction:column;gap:8px;width:100%;margin-top:4px;">
+    <div class="a-row" style="background:rgba(255,45,85,0.09);border-color:rgba(255,45,85,0.2);">
+      <span style="font-size:17px;">📍</span>
+      <div style="font-size:12.5px;font-weight:600;color:rgba(255,110,130,0.95);">Location shared with Mom &amp; Dad</div>
+      <div style="margin-left:auto;color:#30d158;font-size:14px;">✓</div>
+    </div>
+    <div class="a-row" style="background:rgba(77,166,255,0.1);border-color:rgba(77,166,255,0.25);">
+      <span style="font-size:17px;">🚔</span>
+      <div style="font-size:12.5px;font-weight:600;color:#4da6ff;">Police notified — 100</div>
+      <div style="margin-left:auto;color:#30d158;font-size:14px;">✓</div>
+    </div>
+    <div class="a-row" style="background:rgba(48,209,88,0.08);border-color:rgba(48,209,88,0.2);">
+      <span style="font-size:17px;">🏥</span>
+      <div style="font-size:12.5px;font-weight:600;color:#30d158;">Ambulance dispatched — 108</div>
+      <div style="margin-left:auto;color:#30d158;font-size:14px;">✓</div>
+    </div>
+    <div class="a-row" style="background:rgba(255,45,85,0.07);border-color:rgba(255,45,85,0.14);">
+      <span style="font-size:17px;">🔊</span>
+      <div style="font-size:12.5px;font-weight:600;color:rgba(255,100,130,0.85);">Loud alarm activated</div>
+      <div style="margin-left:auto;color:#30d158;font-size:14px;">✓</div>
+    </div>
+  </div>
+  <button class="btn-outline" onclick="closeSOS()" style="max-width:260px;margin-top:4px;">Dismiss &amp; Return</button>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+
+function toggleSwitch(el){
+  var ball=el.querySelector('div');
+  if(el.style.background==='rgb(48, 209, 88)'||el.style.background==='#30d158'){
+    el.style.background='rgba(255,255,255,0.12)';
+    ball.style.right='';ball.style.left='2px';
+  } else {
+    el.style.background='#30d158';
+    ball.style.left='';ball.style.right='2px';
+  }
+}
+function toggleFaq(card){
+  var body=card.querySelector('.faq-body');
+  var arr=card.querySelector('.faq-arr');
+  if(body.style.display==='none'){
+    body.style.display='block';
+    arr.style.transform='rotate(90deg)';
+  } else {
+    body.style.display='none';
+    arr.style.transform='';
+  }
+}
+function openDrawer(){
+  document.getElementById('drawer').classList.add('open');
+  document.getElementById('drawerOverlay').classList.add('show');
+}
+function closeDrawer(){
+  document.getElementById('drawer').classList.remove('open');
+  document.getElementById('drawerOverlay').classList.remove('show');
+}
+function editProfile(){
+  var cur=document.getElementById('drawerName');
+  var val=prompt('Enter your name:', cur?cur.textContent:'');
+  if(val&&val.trim()){
+    val=val.trim();
+    var els=['drawerName','settingsName'];
+    els.forEach(function(id){var e=document.getElementById(id);if(e)e.textContent=val;});
+    var avEls=['drawerAv','settingsAv'];
+    avEls.forEach(function(id){var e=document.getElementById(id);if(e)e.textContent=val.charAt(0).toUpperCase();});
+    var dash=document.querySelector('.avatar');
+    if(dash) dash.textContent=val.charAt(0).toUpperCase();
+    showToast('Profile updated!');
+  }
+}
+function showToast(msg){
+  var t=document.getElementById('toast');
+  t.textContent=msg;
+  t.style.opacity='1';
+  t.style.transform='translateX(-50%) translateY(0)';
+  setTimeout(function(){
+    t.style.opacity='0';
+    t.style.transform='translateX(-50%) translateY(10px)';
+  },2200);
+}
+var map=null, rMap=null, uMark=null, rLines=[], rMarks=[];
+// Start GPS immediately so location is ready when map page opens
+
+var sosT=null, sosCt=3, caller='Dad', delay=0;
+
+// ─── REGISTER FLOW ───
+var regStep=1;
+var regData={};
+
+function regNext(step, skip){
+  if(step===1){
+    var name=document.getElementById('rFullName').value.trim();
+    var phone=document.getElementById('rPhone').value.trim();
+    var pass=document.getElementById('rPass').value.trim();
+    if(!skip&&(!name||!phone||!pass)){showToast('Please fill all fields');return;}
+    regData.name=name; regData.phone=phone; regData.pass=pass;
+  }
+  if(step===2){
+    if(!skip){
+      regData.gname=document.getElementById('rGName').value.trim();
+      regData.gphone=document.getElementById('rGPhone').value.trim();
+    }
+  }
+  var nextStep=step+1;
+  document.getElementById('regStep'+step).classList.remove('active');
+  document.getElementById('regStep'+nextStep).classList.add('active');
+  regStep=nextStep;
+  updateRegDots(nextStep);
+  var titles=['','Create your account','Add a guardian','Allow permissions',''];
+  var subs=['','Step 1 of 3 · Personal details','Step 2 of 3 · Guardian contact','Step 3 of 3 · Permissions',''];
+  document.getElementById('regTitle').textContent=titles[nextStep]||'';
+  document.getElementById('regSub').textContent=subs[nextStep]||'';
+}
+
+function updateRegDots(step){
+  for(var i=0;i<4;i++){
+    var d=document.getElementById('rsd'+i);
+    if(!d) continue;
+    d.className='reg-step-dot';
+    if(i<step-1) d.classList.add('done');
+    else if(i===step-1) d.classList.add('active');
+  }
+}
+
+function grantPerm(el){
+  var ball=el.querySelector('div');
+  if(el.style.background==='rgb(255, 45, 85)'||el.dataset.on==='1'){
+    el.style.background='rgba(255,255,255,0.1)';
+    el.style.borderColor='rgba(255,255,255,0.1)';
+    ball.style.left='2px';
+    el.dataset.on='0';
+  } else {
+    el.style.background='#ff2d55';
+    el.style.borderColor='#ff2d55';
+    ball.style.left='20px';
+    el.dataset.on='1';
+    // actually request location if that row
+    if(el.closest('[style*="48,209,88"]')||el.closest('[style*="30d158"]')){
+      if(navigator.geolocation) navigator.geolocation.getCurrentPosition(function(){},function(){});
+    }
+  }
+}
+
+function regFinish(){
+  document.getElementById('regStep3').classList.remove('active');
+  document.getElementById('regStep4').classList.add('active');
+  updateRegDots(4);
+  document.getElementById('regTitle').textContent='Welcome to SAKHI!';
+  document.getElementById('regSub').textContent='Account created successfully';
+}
+
+function regGoHome(){
+  // apply user data
+  var name=regData.name||'User';
+  var phone=regData.phone||'—';
+  ['drawerName','settingsName'].forEach(function(id){
+    var e=document.getElementById(id); if(e) e.textContent=name;
+  });
+  ['drawerAv','settingsAv'].forEach(function(id){
+    var e=document.getElementById(id); if(e) e.textContent=name.charAt(0).toUpperCase();
+  });
+  var dav=document.querySelector('.avatar'); if(dav) dav.textContent=name.charAt(0).toUpperCase();
+  var dp=document.getElementById('drawerPhone'); if(dp) dp.textContent=phone;
+  // reset steps for next time
+  regStep=1;
+  for(var i=1;i<=4;i++){
+    var p=document.getElementById('regStep'+i);
+    if(p){ p.classList.remove('active'); if(i===1) p.classList.add('active'); }
+  }
+  updateRegDots(1);
+  document.getElementById('regTitle').textContent='Create your account';
+  document.getElementById('regSub').textContent='Step 1 of 3 · Personal details';
+  go('menuPage');
+}
+
+function doLogin(){
+  var phone=document.getElementById('loginPhone').value.trim();
+  var pass=document.getElementById('loginPass').value.trim();
+  if(!phone||!pass){showToast('Please enter your credentials');return;}
+  // set name from phone field if no regData
+  if(!regData.name){
+    var n=phone;
+    ['drawerName','settingsName'].forEach(function(id){var e=document.getElementById(id);if(e)e.textContent=n;});
+    ['drawerAv','settingsAv'].forEach(function(id){var e=document.getElementById(id);if(e)e.textContent=n.charAt(0).toUpperCase();});
+    var dav=document.querySelector('.avatar');if(dav)dav.textContent=n.charAt(0).toUpperCase();
+  }
+  go('menuPage');
+}
+
+// Spawn floating particles on splash
+function spawnParticles(){
+  var container=document.getElementById('splashParticles');
+  if(!container) return;
+  for(var i=0;i<12;i++){
+    var p=document.createElement('div');
+    p.className='sp';
+    var size=Math.random()*6+3;
+    p.style.cssText='width:'+size+'px;height:'+size+'px;left:'+Math.random()*100+'%;animation-duration:'+(Math.random()*8+5)+'s;animation-delay:'+(-Math.random()*10)+'s;opacity:'+(Math.random()*0.5+0.1)+';';
+    container.appendChild(p);
+  }
+}
+window.addEventListener('load', function(){ startGPS(); spawnParticles(); });
+
+function go(id){
+  // If navigating to menuPage from login, capture the username
+  if(id==='settingsPage'){
+    var nm2=document.getElementById('settingsName');
+    var av2=document.getElementById('settingsAv');
+    var src=document.getElementById('drawerName');
+    if(nm2&&src) nm2.textContent=src.textContent;
+    if(av2&&src) av2.textContent=src.textContent.charAt(0).toUpperCase();
+  }
+  if(id==='menuPage'){
+    var inp=document.querySelector('#loginPage .field');
+    if(inp&&inp.value.trim()){
+      var val=inp.value.trim();
+      var nm=document.getElementById('drawerName');
+      var av=document.getElementById('drawerAv');
+      var dav=document.querySelector('.avatar');
+      if(nm) nm.textContent=val;
+      if(av) av.textContent=val.charAt(0).toUpperCase();
+      if(dav) dav.textContent=val.charAt(0).toUpperCase();
+      // also store phone if on register
+      var phone=document.querySelector('#registerPage .field[type=tel]');
+      var dp=document.getElementById('drawerPhone');
+      if(dp&&phone&&phone.value.trim()) dp.textContent=phone.value.trim();
+    }
+  }
+  document.querySelectorAll('.screen').forEach(function(s){s.style.display='none';s.classList.remove('active');});
+  var el=document.getElementById(id);
+  el.style.display='flex';
+  el.classList.add('active');
+  // nav highlight
+  var map2={menuPage:0,mapPage:1,routePage:2,sosPage:3};
+  document.querySelectorAll('.ni').forEach(function(n){n.classList.remove('on');});
+  if(map2[id]!==undefined){
+    var ni=document.getElementById('ni'+map2[id]);
+    if(ni) ni.classList.add('on');
+  }
+  if(id==='mapPage')   setTimeout(initMap,80);
+  if(id==='routePage') setTimeout(initRMap,80);
+}
+
+// ─── GLOBAL GPS STATE ───
+var gpsLat=null, gpsLng=null, gpsAcc=null, gpsWatchId=null, geocodeTimer=null;
+var safeCircles=[];
+
+function startGPS(){
+  if(!navigator.geolocation){ setLocError('GPS not supported'); return; }
+  // single high-accuracy fix first
+  navigator.geolocation.getCurrentPosition(onGPSUpdate, onGPSError,
+    {enableHighAccuracy:true, timeout:10000, maximumAge:0});
+  // then continuous watch
+  if(gpsWatchId===null){
+    gpsWatchId=navigator.geolocation.watchPosition(onGPSUpdate, onGPSError,
+      {enableHighAccuracy:true, maximumAge:2000, timeout:15000});
+  }
+}
+
+function onGPSUpdate(p){
+  gpsLat=p.coords.latitude;
+  gpsLng=p.coords.longitude;
+  gpsAcc=p.coords.accuracy;
+  // update map if open
+  if(map && uMark){
+    uMark.setLatLng([gpsLat,gpsLng]);
+    // reposition circles only first time or if moved >50m
+    if(safeCircles.length===0){
+      placeCircles(gpsLat,gpsLng);
+    }
+  }
+  // update display
+  var locTxt=document.getElementById('locTxt');
+  var locSub=document.getElementById('locSub');
+  if(locTxt) locTxt.textContent=gpsLat.toFixed(5)+'°N  '+gpsLng.toFixed(5)+'°E';
+  if(locSub) locSub.textContent='Live GPS · ±'+Math.round(gpsAcc||0)+'m';
+  // throttle reverse geocode — max once per 8s
+  if(geocodeTimer) clearTimeout(geocodeTimer);
+  geocodeTimer=setTimeout(function(){ doGeocode(gpsLat,gpsLng); }, 2000);
+}
+
+function onGPSError(err){
+  var locTxt=document.getElementById('locTxt');
+  if(locTxt) locTxt.textContent='Waiting for GPS…';
+  var locSub=document.getElementById('locSub');
+  if(locSub) locSub.textContent='Allow location access in browser';
+}
+
+function setLocError(msg){
+  var locTxt=document.getElementById('locTxt');
+  if(locTxt) locTxt.textContent=msg;
+}
+
+function doGeocode(lat,lng){
+  fetch('https://nominatim.openstreetmap.org/reverse?lat='+lat+'&lon='+lng+'&format=json')
+    .then(function(r){return r.json();})
+    .then(function(d){
+      if(!d||!d.address) return;
+      var a=d.address, parts=[];
+      if(a.road) parts.push(a.road);
+      if(a.suburb||a.neighbourhood) parts.push(a.suburb||a.neighbourhood);
+      if(a.city||a.town||a.village) parts.push(a.city||a.town||a.village);
+      var locSub=document.getElementById('locSub');
+      if(locSub && parts.length) locSub.textContent=parts.join(', ');
+    }).catch(function(){});
+}
+
+function placeCircles(lat,lng){
+  if(!map) return;
+  safeCircles.forEach(function(c){map.removeLayer(c);});
+  safeCircles=[];
+  safeCircles.push(L.circle([lat,lng],{radius:270,color:'#30d158',fillColor:'#30d158',fillOpacity:0.05,weight:1.2}).addTo(map));
+  safeCircles.push(L.circle([lat,lng],{radius:560,color:'#ffd60a',fillColor:'#ffd60a',fillOpacity:0.025,weight:1,dashArray:'6,6'}).addTo(map));
+}
+
+function initMap(){
+  if(map){
+    map.invalidateSize();
+    // If we already have GPS, pan to it
+    if(gpsLat!==null && uMark){
+      map.setView([gpsLat,gpsLng],16);
+      uMark.setLatLng([gpsLat,gpsLng]);
+    }
+    return;
+  }
+  var startLat=gpsLat||19.076, startLng=gpsLng||72.8777;
+  map=L.map('map',{zoomControl:false,attributionControl:false}).setView([startLat,startLng],16);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19}).addTo(map);
+  var icon=L.divIcon({html:'<div style="width:16px;height:16px;border-radius:50%;background:#ff2d55;border:2.5px solid white;box-shadow:0 0 0 6px rgba(255,45,85,0.25),0 0 0 12px rgba(255,45,85,0.08);animation:gpsPulse 2s ease-out infinite;"></div>',iconSize:[16,16],iconAnchor:[8,8],className:''});
+  uMark=L.marker([startLat,startLng],{icon:icon}).addTo(map);
+  placeCircles(startLat,startLng);
+  // POIs near real location if known
+  var mH=L.divIcon({html:'<div style="background:#30d158;color:#000;font-size:10px;font-weight:800;padding:2px 7px;border-radius:5px;white-space:nowrap;box-shadow:0 2px 6px rgba(0,0,0,0.3);">🏥 Hospital</div>',iconAnchor:[38,10]});
+  var mP=L.divIcon({html:'<div style="background:#4da6ff;color:#000;font-size:10px;font-weight:800;padding:2px 7px;border-radius:5px;white-space:nowrap;box-shadow:0 2px 6px rgba(0,0,0,0.3);">🚔 Police</div>',iconAnchor:[32,10]});
+  L.marker([startLat+0.003,startLng+0.004],{icon:mH}).addTo(map);
+  L.marker([startLat-0.004,startLng-0.003],{icon:mP}).addTo(map);
+  // If GPS arrived while map was loading, centre it
+  if(gpsLat!==null){
+    map.setView([gpsLat,gpsLng],16);
+    uMark.setLatLng([gpsLat,gpsLng]);
+    placeCircles(gpsLat,gpsLng);
+  }
+}
+
+function initRMap(){
+  if(rMap){rMap.invalidateSize();return;}
+  var c=uMark?uMark.getLatLng():{lat:19.076,lng:72.8777};
+  rMap=L.map('routeMap',{zoomControl:false,attributionControl:false}).setView(c,15);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18}).addTo(rMap);
+  var si=L.divIcon({html:'<div style="width:11px;height:11px;border-radius:50%;background:#ff2d55;border:2px solid white;box-shadow:0 0 0 4px rgba(255,45,85,0.25);"></div>',iconSize:[11,11],iconAnchor:[5,5]});
+  L.marker(c,{icon:si}).addTo(rMap);
+  var la=c.lat,ln=c.lng;
+  L.polyline([[la,ln],[la+.007,ln+.004],[la+.013,ln+.007]],{color:'#30d158',weight:6,opacity:0.65}).addTo(rMap);
+  L.polyline([[la,ln],[la+.004,ln-.006],[la+.009,ln-.009]],{color:'#ffd60a',weight:5,opacity:0.5}).addTo(rMap);
+  L.polyline([[la-.003,ln-.005],[la-.008,ln-.009]],{color:'#ff2d55',weight:4,opacity:0.5,dashArray:'8,6'}).addTo(rMap);
+  L.circle([la-.007,ln-.007],{radius:130,color:'#ff2d55',fillColor:'#ff2d55',fillOpacity:0.07,weight:1}).addTo(rMap);
+  rMap.on('click',function(e){planRoute(e.latlng);});
+}
+
+function planRoute(dest){
+  clearRoute();
+  var start=uMark?uMark.getLatLng():L.latLng(19.076,72.8777);
+  var mid=L.latLng((start.lat+dest.lat)/2+.003,(start.lng+dest.lng)/2+.002);
+  rLines.push(L.polyline([start,mid,dest],{color:'white',weight:3,opacity:0.85,dashArray:'8,7'}).addTo(rMap));
+  var di=L.divIcon({html:'<div style="background:#30d158;color:#000;font-size:10px;font-weight:800;padding:3px 7px;border-radius:7px;">📍 Dest</div>',iconAnchor:[28,10]});
+  rMarks.push(L.marker(dest,{icon:di}).addTo(rMap));
+  var dist=(start.distanceTo(dest)/1000).toFixed(2);
+  var mins=Math.round(dist*12);
+  var tip=document.getElementById('routeTip');
+  tip.style.display='flex';
+  document.getElementById('routeTipText').textContent=dist+' km · ~'+mins+' min · 3 CCTV zones';
+  document.getElementById('routeActs').style.display='flex';
+  rMap.fitBounds(L.latLngBounds([start,dest]),{padding:[34,34]});
+}
+
+function clearRoute(){
+  rLines.forEach(function(l){rMap.removeLayer(l);});
+  rMarks.forEach(function(m){rMap.removeLayer(m);});
+  rLines=[];rMarks=[];
+  document.getElementById('routeTip').style.display='none';
+  document.getElementById('routeActs').style.display='none';
+}
+
+function pickCaller(idx,name){
+  for(var i=0;i<3;i++){
+    document.getElementById('cp'+i).classList.remove('picked');
+    document.getElementById('ck'+i).style.display='none';
+  }
+  document.getElementById('cp'+idx).classList.add('picked');
+  document.getElementById('ck'+idx).style.display='';
+  caller=name;
+}
+
+function pickDelay(idx,sec){
+  for(var i=0;i<5;i++) document.getElementById('dc'+i).classList.remove('picked');
+  document.getElementById('dc'+idx).classList.add('picked');
+  delay=sec;
+}
+
+function triggerCall(){
+  if(delay>0){
+    var t=document.createElement('div');
+    t.textContent='Call in '+delay+'s…';
+    t.style.cssText='position:fixed;bottom:94px;left:50%;transform:translateX(-50%);background:#222235;color:#f0f0f8;padding:9px 18px;border-radius:20px;font-size:12px;font-weight:600;z-index:998;';
+    document.body.appendChild(t);
+    setTimeout(function(){if(t.parentNode)t.parentNode.removeChild(t);},Math.min(delay*1000-100,2500));
+  }
+  setTimeout(function(){
+    document.getElementById('callOverlay').classList.add('show');
+    document.getElementById('callerNm').textContent=caller;
+    document.getElementById('callerAv').textContent=caller.charAt(0).toUpperCase();
+  },delay*1000);
+}
+
+function endCall(){document.getElementById('callOverlay').classList.remove('show');}
+
+function startSOS(e){
+  if(e&&e.preventDefault)e.preventDefault();
+  sosCt=3;
+  var nm=document.getElementById('sosNum');
+  nm.style.display='block';nm.textContent=sosCt;
+  sosT=setInterval(function(){
+    sosCt--;nm.textContent=sosCt;
+    if(sosCt<=0){clearInterval(sosT);nm.style.display='none';fireSOSAlert();}
+  },1000);
+}
+function stopSOS(){
+  if(sosT){clearInterval(sosT);sosT=null;}
+  document.getElementById('sosNum').style.display='none';
+}
+function fireSOSAlert(){document.getElementById('sosAlert').classList.add('show');}
+function closeSOS(){document.getElementById('sosAlert').classList.remove('show');go('menuPage');}
+
+function shareLocation(){
+  if(navigator.share) navigator.share({title:'My Location',text:'Tracking my journey.',url:window.location.href});
+  else alert('Location link copied!');
+}
+</script>
+
+<!-- ════ DRAWER OVERLAY ════ -->
+<div id="drawerOverlay" onclick="closeDrawer()"></div>
+
+<!-- ════ SIDE DRAWER ════ -->
+<div id="drawer">
+  <div class="drw-head">
+    <div style="font-size:9.5px;font-weight:700;letter-spacing:1.5px;color:rgba(240,240,248,0.3);text-transform:uppercase;margin-bottom:14px;">SAKHI</div>
+    <div style="display:flex;align-items:center;gap:13px;">
+      <div class="drw-avatar" id="drawerAv">?</div>
+      <div>
+        <div style="font-size:16px;font-weight:800;line-height:1.2;" id="drawerName">User</div>
+        <div style="font-size:11px;color:rgba(240,240,248,0.4);margin-top:2px;" id="drawerPhone">—</div>
+        <div style="display:inline-flex;align-items:center;gap:4px;margin-top:5px;background:rgba(48,209,88,0.1);border:1px solid rgba(48,209,88,0.2);padding:2px 8px;border-radius:20px;">
+          <div style="width:5px;height:5px;background:#30d158;border-radius:50%;"></div>
+          <span style="font-size:9.5px;font-weight:700;color:#30d158;">Protected</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="drw-section">Account</div>
+
+  <button class="drw-item" onclick="closeDrawer();go('guardiansPage')">
+    <div class="drw-icon di-green">👥</div>
+    <div><div class="drw-lbl">Guardians</div><div class="drw-sub">Manage trusted contacts</div></div>
+    <span class="drw-arr">›</span>
+  </button>
+  <button class="drw-item" onclick="closeDrawer();go('notifPage')">
+    <div class="drw-icon di-yellow">🔔</div>
+    <div><div class="drw-lbl">Notifications</div><div class="drw-sub">Alert preferences</div></div>
+    <div style="margin-left:auto;background:rgba(255,45,85,0.15);color:#ff2d55;font-size:9.5px;font-weight:800;padding:2px 7px;border-radius:20px;border:1px solid rgba(255,45,85,0.2);">3</div>
+  </button>
+  <button class="drw-item" onclick="closeDrawer();go('privacyPage')">
+    <div class="drw-icon di-blue">🔒</div>
+    <div><div class="drw-lbl">Privacy</div><div class="drw-sub">Location &amp; data</div></div>
+    <span class="drw-arr">›</span>
+  </button>
+  <button class="drw-item" onclick="closeDrawer();go('settingsPage')">
+    <div class="drw-icon di-gray">⚙️</div>
+    <div><div class="drw-lbl">Settings</div><div class="drw-sub">App preferences</div></div>
+    <span class="drw-arr">›</span>
+  </button>
+  <button class="drw-item" onclick="closeDrawer();go('helpPage')">
+    <div class="drw-icon di-gray">❓</div>
+    <div><div class="drw-lbl">Help &amp; Support</div><div class="drw-sub">FAQs &amp; contact</div></div>
+    <span class="drw-arr">›</span>
+  </button>
+
+  <div class="drw-foot">
+    <div style="font-size:10px;color:rgba(240,240,248,0.18);margin-bottom:10px;text-align:center;">SAKHI v2.4.1 · Mumbai</div>
+    <button class="drw-logout" onclick="closeDrawer();go('loginPage')">
+      <span style="font-size:18px;">🚪</span>
+      <span>Log Out</span>
+    </button>
+  </div>
+</div>
+
+<!-- toast -->
+<div id="toast" style="position:fixed;bottom:94px;left:50%;transform:translateX(-50%) translateY(10px);background:#222235;color:#f0f0f8;padding:9px 18px;border-radius:20px;font-size:12px;font-weight:600;z-index:998;opacity:0;transition:all 0.25s;pointer-events:none;white-space:nowrap;border:1px solid rgba(255,255,255,0.08);"></div>
+
+<!-- ════ GUARDIANS PAGE ════ -->
+<div id="guardiansPage" class="screen">
+  <div class="phead">
+    <button class="back" onclick="go('menuPage')">
+      <svg width="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 12H5M12 5l-7 7 7 7"/></svg> Back
+    </button>
+  </div>
+  <div style="padding:0 20px 24px;">
+    <div style="font-size:22px;font-weight:800;color:#5be08a;margin-bottom:4px;">Guardians</div>
+    <div style="font-size:12px;color:rgba(240,240,248,0.4);margin-bottom:22px;">People who watch over you.</div>
+    <div class="card" style="margin-bottom:12px;">
+      <div style="display:flex;align-items:center;gap:12px;padding:6px 0;">
+        <div style="width:44px;height:44px;border-radius:13px;background:linear-gradient(135deg,#2a1a2e,#3a2040);border:1px solid rgba(255,45,85,0.2);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:16px;flex-shrink:0;">M</div>
+        <div style="flex:1;">
+          <div style="font-size:14px;font-weight:700;">Mom</div>
+          <div style="font-size:11px;color:rgba(240,240,248,0.4);">+91 98765 43210</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:5px;background:rgba(48,209,88,0.1);border:1px solid rgba(48,209,88,0.2);padding:3px 9px;border-radius:20px;">
+          <div style="width:5px;height:5px;background:#30d158;border-radius:50%;"></div>
+          <span style="font-size:10px;font-weight:700;color:#30d158;">Online</span>
+        </div>
+      </div>
+      <div style="height:1px;background:rgba(255,255,255,0.05);margin:4px 0;"></div>
+      <div style="display:flex;align-items:center;gap:12px;padding:6px 0;">
+        <div style="width:44px;height:44px;border-radius:13px;background:linear-gradient(135deg,#2a1a2e,#3a2040);border:1px solid rgba(255,45,85,0.2);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:16px;flex-shrink:0;">D</div>
+        <div style="flex:1;">
+          <div style="font-size:14px;font-weight:700;">Dad</div>
+          <div style="font-size:11px;color:rgba(240,240,248,0.4);">+91 91234 56789</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:5px;background:rgba(48,209,88,0.1);border:1px solid rgba(48,209,88,0.2);padding:3px 9px;border-radius:20px;">
+          <div style="width:5px;height:5px;background:#30d158;border-radius:50%;"></div>
+          <span style="font-size:10px;font-weight:700;color:#30d158;">Online</span>
+        </div>
+      </div>
+
+    </div>
+    <button class="btn-red" onclick="showToast('Guardian invite sent!')">+ Add New Guardian</button>
+    <div style="margin-top:18px;">
+      <div class="lbl" style="margin-bottom:10px;">Check-In Schedule</div>
+      <div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+          <div><div style="font-size:13px;font-weight:600;">Auto Check-In</div><div style="font-size:10.5px;color:rgba(240,240,248,0.4);">Every 30 minutes when active</div></div>
+          <div id="checkinToggle" onclick="toggleSwitch(this)" style="width:42px;height:24px;border-radius:12px;background:#30d158;position:relative;cursor:pointer;transition:background 0.2s;"><div style="width:20px;height:20px;background:white;border-radius:50%;position:absolute;top:2px;right:2px;transition:right 0.2s;"></div></div>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          <div><div style="font-size:13px;font-weight:600;">Missed Check-In Alert</div><div style="font-size:10.5px;color:rgba(240,240,248,0.4);">Notify guardians if missed</div></div>
+          <div onclick="toggleSwitch(this)" style="width:42px;height:24px;border-radius:12px;background:#30d158;position:relative;cursor:pointer;transition:background 0.2s;"><div style="width:20px;height:20px;background:white;border-radius:50%;position:absolute;top:2px;right:2px;transition:right 0.2s;"></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════ NOTIFICATIONS PAGE ════ -->
+<div id="notifPage" class="screen">
+  <div class="phead">
+    <button class="back" onclick="go('menuPage')">
+      <svg width="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 12H5M12 5l-7 7 7 7"/></svg> Back
+    </button>
+  </div>
+  <div style="padding:0 20px 24px;">
+    <div style="font-size:22px;font-weight:800;color:#ffd60a;margin-bottom:4px;">Notifications</div>
+    <div style="font-size:12px;color:rgba(240,240,248,0.4);margin-bottom:20px;">Recent alerts &amp; activity.</div>
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      <div class="card" style="border-left:3px solid #ff2d55;">
+        <div style="display:flex;align-items:flex-start;gap:11px;">
+          <span style="font-size:20px;flex-shrink:0;">🚨</span>
+          <div style="flex:1;">
+            <div style="font-size:13px;font-weight:700;color:#ff2d55;">SOS Triggered</div>
+            <div style="font-size:11.5px;color:rgba(240,240,248,0.6);margin-top:2px;">Test SOS alert was sent to your guardians.</div>
+            <div style="font-size:10px;color:rgba(240,240,248,0.3);margin-top:5px;">Today, 6:42 PM</div>
+          </div>
+        </div>
+      </div>
+      <div class="card" style="border-left:3px solid #30d158;">
+        <div style="display:flex;align-items:flex-start;gap:11px;">
+          <span style="font-size:20px;flex-shrink:0;">📍</span>
+          <div style="flex:1;">
+            <div style="font-size:13px;font-weight:700;color:#30d158;">Location Shared</div>
+            <div style="font-size:11.5px;color:rgba(240,240,248,0.6);margin-top:2px;">Your live location was shared with Mom.</div>
+            <div style="font-size:10px;color:rgba(240,240,248,0.3);margin-top:5px;">Today, 5:15 PM</div>
+          </div>
+        </div>
+      </div>
+      <div class="card" style="border-left:3px solid #4da6ff;">
+        <div style="display:flex;align-items:flex-start;gap:11px;">
+          <span style="font-size:20px;flex-shrink:0;">👥</span>
+          <div style="flex:1;">
+            <div style="font-size:13px;font-weight:700;color:#4da6ff;">Guardian Online</div>
+            <div style="font-size:11.5px;color:rgba(240,240,248,0.6);margin-top:2px;">Dad is now online and watching over you.</div>
+            <div style="font-size:10px;color:rgba(240,240,248,0.3);margin-top:5px;">Today, 4:00 PM</div>
+          </div>
+        </div>
+      </div>
+      <div class="lbl" style="margin-top:6px;margin-bottom:10px;">Notification Settings</div>
+      <div class="card">
+        <div style="display:flex;flex-direction:column;gap:14px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <div><div style="font-size:13px;font-weight:600;">SOS Alerts</div><div style="font-size:10.5px;color:rgba(240,240,248,0.4);">Critical emergency alerts</div></div>
+            <div onclick="toggleSwitch(this)" style="width:42px;height:24px;border-radius:12px;background:#30d158;position:relative;cursor:pointer;"><div style="width:20px;height:20px;background:white;border-radius:50%;position:absolute;top:2px;right:2px;transition:right 0.2s;"></div></div>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <div><div style="font-size:13px;font-weight:600;">Guardian Updates</div><div style="font-size:10.5px;color:rgba(240,240,248,0.4);">When guardians go online/offline</div></div>
+            <div onclick="toggleSwitch(this)" style="width:42px;height:24px;border-radius:12px;background:#30d158;position:relative;cursor:pointer;"><div style="width:20px;height:20px;background:white;border-radius:50%;position:absolute;top:2px;right:2px;transition:right 0.2s;"></div></div>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <div><div style="font-size:13px;font-weight:600;">Route Tips</div><div style="font-size:10.5px;color:rgba(240,240,248,0.4);">AI safety suggestions</div></div>
+            <div onclick="toggleSwitch(this)" style="width:42px;height:24px;border-radius:12px;background:rgba(255,255,255,0.12);position:relative;cursor:pointer;"><div style="width:20px;height:20px;background:white;border-radius:50%;position:absolute;top:2px;left:2px;transition:left 0.2s;"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════ PRIVACY PAGE ════ -->
+<div id="privacyPage" class="screen">
+  <div class="phead">
+    <button class="back" onclick="go('menuPage')">
+      <svg width="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 12H5M12 5l-7 7 7 7"/></svg> Back
+    </button>
+  </div>
+  <div style="padding:0 20px 24px;">
+    <div style="font-size:22px;font-weight:800;color:#6fbfff;margin-bottom:4px;">Privacy</div>
+    <div style="font-size:12px;color:rgba(240,240,248,0.4);margin-bottom:20px;">Control your location &amp; data.</div>
+    <div style="display:flex;flex-direction:column;gap:12px;">
+      <div class="card">
+        <div class="lbl" style="margin-bottom:12px;">Location Sharing</div>
+        <div style="display:flex;flex-direction:column;gap:14px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <div><div style="font-size:13px;font-weight:600;">Share with Guardians</div><div style="font-size:10.5px;color:rgba(240,240,248,0.4);">Live location visible to your contacts</div></div>
+            <div onclick="toggleSwitch(this)" style="width:42px;height:24px;border-radius:12px;background:#30d158;position:relative;cursor:pointer;"><div style="width:20px;height:20px;background:white;border-radius:50%;position:absolute;top:2px;right:2px;transition:right 0.2s;"></div></div>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <div><div style="font-size:13px;font-weight:600;">Background Location</div><div style="font-size:10.5px;color:rgba(240,240,248,0.4);">Track even when app is closed</div></div>
+            <div onclick="toggleSwitch(this)" style="width:42px;height:24px;border-radius:12px;background:#30d158;position:relative;cursor:pointer;"><div style="width:20px;height:20px;background:white;border-radius:50%;position:absolute;top:2px;right:2px;transition:right 0.2s;"></div></div>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <div><div style="font-size:13px;font-weight:600;">Location History</div><div style="font-size:10.5px;color:rgba(240,240,248,0.4);">Save last 7 days of routes</div></div>
+            <div onclick="toggleSwitch(this)" style="width:42px;height:24px;border-radius:12px;background:rgba(255,255,255,0.12);position:relative;cursor:pointer;"><div style="width:20px;height:20px;background:white;border-radius:50%;position:absolute;top:2px;left:2px;transition:left 0.2s;"></div></div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="lbl" style="margin-bottom:12px;">Data</div>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <button class="btn-outline" onclick="showToast('Trip history exported!')" style="font-size:13px;justify-content:flex-start;gap:10px;"><span>📤</span> Export My Data</button>
+          <button onclick="showToast('Location history cleared!')" style="display:flex;align-items:center;gap:10px;width:100%;padding:13px;background:rgba(255,45,85,0.07);border:1px solid rgba(255,45,85,0.2);border-radius:12px;color:#ff2d55;font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;"><span>🗑️</span> Clear Location History</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════ SETTINGS PAGE ════ -->
+<div id="settingsPage" class="screen">
+  <div class="phead">
+    <button class="back" onclick="go('menuPage')">
+      <svg width="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 12H5M12 5l-7 7 7 7"/></svg> Back
+    </button>
+  </div>
+  <div style="padding:0 20px 24px;">
+    <div style="font-size:22px;font-weight:800;margin-bottom:4px;">Settings</div>
+    <div style="font-size:12px;color:rgba(240,240,248,0.4);margin-bottom:20px;">Personalise your SAKHI experience.</div>
+    <div style="display:flex;flex-direction:column;gap:12px;">
+      <div class="card">
+        <div class="lbl" style="margin-bottom:12px;">Account</div>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <div style="display:flex;align-items:center;gap:12px;">
+            <div style="width:52px;height:52px;border-radius:15px;background:linear-gradient(135deg,#ff2d55,#ff6b9d);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:20px;" id="settingsAv">A</div>
+            <div style="flex:1;">
+              <div style="font-size:14px;font-weight:700;" id="settingsName">User</div>
+              <div style="font-size:11px;color:rgba(240,240,248,0.4);">Tap to edit profile</div>
+            </div>
+            <button onclick="editProfile()" style="background:#1e1e2e;border:1px solid rgba(255,255,255,0.08);border-radius:9px;padding:7px 13px;color:#f0f0f8;font-size:12px;font-weight:600;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;">Edit</button>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="lbl" style="margin-bottom:12px;">Preferences</div>
+        <div style="display:flex;flex-direction:column;gap:14px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <div><div style="font-size:13px;font-weight:600;">Dark Mode</div><div style="font-size:10.5px;color:rgba(240,240,248,0.4);">Always on for better visibility</div></div>
+            <div style="width:42px;height:24px;border-radius:12px;background:#30d158;position:relative;cursor:pointer;"><div style="width:20px;height:20px;background:white;border-radius:50%;position:absolute;top:2px;right:2px;"></div></div>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <div><div style="font-size:13px;font-weight:600;">Haptic Feedback</div><div style="font-size:10.5px;color:rgba(240,240,248,0.4);">Vibration on alerts</div></div>
+            <div onclick="toggleSwitch(this)" style="width:42px;height:24px;border-radius:12px;background:#30d158;position:relative;cursor:pointer;"><div style="width:20px;height:20px;background:white;border-radius:50%;position:absolute;top:2px;right:2px;transition:right 0.2s;"></div></div>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <div><div style="font-size:13px;font-weight:600;">Quick SOS (Power btn x3)</div><div style="font-size:10.5px;color:rgba(240,240,248,0.4);">Trigger SOS from lock screen</div></div>
+            <div onclick="toggleSwitch(this)" style="width:42px;height:24px;border-radius:12px;background:#30d158;position:relative;cursor:pointer;"><div style="width:20px;height:20px;background:white;border-radius:50%;position:absolute;top:2px;right:2px;transition:right 0.2s;"></div></div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="lbl" style="margin-bottom:10px;">App Info</div>
+        <div style="display:flex;justify-content:space-between;font-size:12.5px;color:rgba(240,240,248,0.5);margin-bottom:6px;"><span>Version</span><span style="font-weight:600;color:#f0f0f8;">SAKHI 2.4.1</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:12.5px;color:rgba(240,240,248,0.5);"><span>Last Updated</span><span style="font-weight:600;color:#f0f0f8;">March 2025</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════ HELP PAGE ════ -->
+<div id="helpPage" class="screen">
+  <div class="phead">
+    <button class="back" onclick="go('menuPage')">
+      <svg width="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 12H5M12 5l-7 7 7 7"/></svg> Back
+    </button>
+  </div>
+  <div style="padding:0 20px 24px;">
+    <div style="font-size:22px;font-weight:800;margin-bottom:4px;">Help &amp; Support</div>
+    <div style="font-size:12px;color:rgba(240,240,248,0.4);margin-bottom:20px;">We're here for you.</div>
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      <div class="lbl" style="margin-bottom:4px;">FAQs</div>
+      <div class="card" onclick="toggleFaq(this)" style="cursor:pointer;">
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          <div style="font-size:13.5px;font-weight:600;">How does SOS work?</div>
+          <span style="color:rgba(240,240,248,0.3);font-size:16px;transition:transform 0.2s;" class="faq-arr">›</span>
+        </div>
+        <div class="faq-body" style="display:none;font-size:12px;color:rgba(240,240,248,0.5);margin-top:10px;line-height:1.6;">Hold the SOS button for 3 seconds. SAKHI will instantly share your live location with all guardians and automatically call Police (100) and Ambulance (108).</div>
+      </div>
+      <div class="card" onclick="toggleFaq(this)" style="cursor:pointer;">
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          <div style="font-size:13.5px;font-weight:600;">How do I add a guardian?</div>
+          <span style="color:rgba(240,240,248,0.3);font-size:16px;" class="faq-arr">›</span>
+        </div>
+        <div class="faq-body" style="display:none;font-size:12px;color:rgba(240,240,248,0.5);margin-top:10px;line-height:1.6;">Go to Guardians from the menu. Tap "Add New Guardian" and enter their name and phone number. They'll receive an invite SMS.</div>
+      </div>
+      <div class="card" onclick="toggleFaq(this)" style="cursor:pointer;">
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          <div style="font-size:13.5px;font-weight:600;">Is my location always shared?</div>
+          <span style="color:rgba(240,240,248,0.3);font-size:16px;" class="faq-arr">›</span>
+        </div>
+        <div class="faq-body" style="display:none;font-size:12px;color:rgba(240,240,248,0.5);margin-top:10px;line-height:1.6;">No. Location is only shared when you tap "Share Location" or trigger SOS. You control this fully from Privacy settings.</div>
+      </div>
+      <div class="card" onclick="toggleFaq(this)" style="cursor:pointer;">
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          <div style="font-size:13.5px;font-weight:600;">What is Fake Call?</div>
+          <span style="color:rgba(240,240,248,0.3);font-size:16px;" class="faq-arr">›</span>
+        </div>
+        <div class="faq-body" style="display:none;font-size:12px;color:rgba(240,240,248,0.5);margin-top:10px;line-height:1.6;">Fake Call simulates an incoming call on your phone, giving you a reason to leave an uncomfortable situation immediately.</div>
+      </div>
+      <div class="lbl" style="margin-top:8px;margin-bottom:8px;">Contact Us</div>
+      <button class="btn-outline" onclick="showToast('Opening email...')" style="font-size:13px;justify-content:flex-start;gap:10px;"><span>✉️</span> Email: help@sakhi.app</button>
+      <button class="btn-outline" onclick="showToast('Opening WhatsApp...')" style="font-size:13px;justify-content:flex-start;gap:10px;"><span>💬</span> WhatsApp Support</button>
+      <div style="text-align:center;font-size:11px;color:rgba(240,240,248,0.2);margin-top:10px;">Emergency helpline: 112 (India)</div>
+    </div>
+  </div>
+</div>
+</body>
+</html>
